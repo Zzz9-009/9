@@ -1,0 +1,91 @@
+.icon{
+    width: 1em;
+    height: 1em;
+    vertical-align:-0.15em;
+    fill: currentColor;
+    overflow:hidden;
+}
+*{
+
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+.tab-nav{
+    position: fixed;
+    bottom:0;
+    left:0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background-color:#fff;
+    width: 100%;
+    border-top:1px solid #eee;
+}
+.tab-item{
+    flex:1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content:center;
+    color:■#666;
+    position: relative;
+}
+
+.tab-item svg{
+    font-size:24px;
+    margin:5px;
+}
+.tab-item.active{
+    color: red;
+}
+.budge-dot{
+    color: #fff;
+    font-size: 10px;
+    position: absolute;
+    top: 0px;
+    right:24px;
+    width: 16px;
+    height: 16px;
+    background-color: red;
+    border-radius: 50%;
+}
+.budge-num{
+    position: absolute;
+    top: 0px;
+    right: 24px;
+    min-width: 16px;
+    height: 16px;
+    background-color: red;
+    color: #fff;
+    font-size: 12px;
+    line-height: 16px;
+    text-align: center;
+    border-radius: 8px;
+    padding: 0 4px;
+}
+.budge-border{
+    position: absolute;
+    top: 0px;
+    right: 24px;
+    width: 16px;
+    height: 16px;
+    background-color: red;
+    border: 2px solid pink;
+    border-radius: 50%;
+}
+.budge-dot.max{
+    position: absolute;
+    top: 0px;
+    right: 24px;
+    min-width: 16px;
+    height: 16px;
+    background-color: red;
+    color: #fff;
+    font-size: 8px;
+    line-height: 16px;
+    text-align: center;
+    border-radius: 8px;
+    padding: 0 2px;
+}

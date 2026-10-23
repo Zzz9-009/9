@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <style>
+        div{
+            width: 180px;
+            height: 180px;
+            background-color: red;
+            margin: 12px;
+            color: white;
+            text-align: center;
+            line-height: 180px;
+            font-size: 100px;
+            float: left;
+        }
+    </style>
+    <link rel="stylesheet" href="">
+</head>
+<body>
+    <h1>24002120207 王振旭</h1>
+    <script>
+        var a = 10;
+        var b = 20;
+        console.log(a++,++b);
+        console.log(a+b);
+        console.log(a-b>0?a:b);
+        console.log(true&&false,true||false,!true);
+        var str='hello,world', num = 123,bl = true,obj = {name:'张三',age:20},ud,kong=null;
+        console.log(typeof str,typeof num,typeof bl,typeof obj,typeof ud,typeof kong);
+        console.log(0.1+0.2==0.3,0.1+0.1);
+        console.log(1+"1",'1'-1,'11'+1-1);
+        console.log('wangyao'-1);
+        console.log(isNaN(NaN));
+        console.log(NaN==NaN,null==null,undefined==undefined);
+        console.log(parseInt(12312.56))
+        var p=99.99
+        console.log(p==parseInt(p))
+        console.log(parseInt(100,16));
+        var c = 0;
+        for(var i=0;i<=100;i++){
+            c+=i;
+        }
+        for(var t=0;t<100;t++){
+            if(t%7==0 || t%10==7 || Math.floor(t/10)==7){
+                document.write("<div></div>");
+            }
+            else{
+                document.write("<div>"+t+"</div>");    
+            };
+            console.log(t);
+        }
+        //回文数，11 22
+        for(var i=1;i<100;i++){
+            if(i%10==Math.floor(i/10)){
+                console.log(i);
+            }
+        }
+        console.log(c);
+    </script>
+</body>
+</html>
