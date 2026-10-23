@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>星球管理后台 · 羊了个羊</title>
+    <link rel="stylesheet" href="planet.css">
+    <script src="planet.js" defer></script>
+</head>
+<body>
+<h1>24002120207 王振旭</h1>
+<main class="app">
+    <header class="topbar"><a class="back-link" href="planet-me.html">‹ 玩家端</a><strong>🛠 星球运营台</strong><a class="top-action" href="planet-home.html">预览</a></header>
+    <p class="eyebrow">ADMIN CONSOLE · DEMO</p>
+    <h1>运营总览</h1>
+    <p class="subcopy">这里是课堂展示用的前端后台，不连接真实服务器。</p>
+    <section class="section admin-grid" aria-label="运营数据">
+        <div class="admin-stat"><strong>1,286</strong><span>今日活跃玩家</span></div>
+        <div class="admin-stat"><strong>8,420</strong><span>今日闯关次数</span></div>
+        <div class="admin-stat"><strong>92.6%</strong><span>关卡完成率</span></div>
+        <div class="admin-stat"><strong>3</strong><span>开放星球</span></div>
+    </section>
+    <section class="section card">
+        <div class="section-title"><h2>关卡管理</h2><span class="pill">3 个星球</span></div>
+        <div class="list-row"><span class="planet-icon">🌱</span><span class="row-main"><strong>青草星球</strong><p>20 个关卡 · 当前开放</p></span><span class="status-live">●</span></div>
+        <div class="list-row"><span class="planet-icon">🌊</span><span class="row-main"><strong>泡泡海星</strong><p>12 个关卡 · 内容准备中</p></span><span class="status-draft">●</span></div>
+        <div class="list-row"><span class="planet-icon">☁️</span><span class="row-main"><strong>云朵牧场</strong><p>10 个关卡 · 内容准备中</p></span><span class="status-draft">●</span></div>
+    </section>
+    <section class="section card">
+        <h2>发布星球公告</h2>
+        <form data-admin-form>
+            <label class="form-field">公告标题<input type="text" placeholder="例如：新星球即将开放" required></label>
+            <label class="form-field">公告内容<textarea rows="3" placeholder="写下想告诉玩家的消息…" required></textarea></label>
+            <button class="button small" type="submit">保存公告</button>
+        </form>
+    </section>
+    <section class="section card">
+        <h2>快捷管理</h2>
+        <div class="quick-grid">
+            <button class="quick-link" type="button" data-toast="玩家列表（演示）"><span>👥</span><small>玩家管理</small></button>
+            <button class="quick-link" type="button" data-toast="数据报表（演示）"><span>📊</span><small>数据报表</small></button>
+            <button class="quick-link" type="button" data-toast="奖励配置（演示）"><span>🎁</span><small>奖励配置</small></button>
+            <button class="quick-link" type="button" data-toast="系统设置（演示）"><span>⚙️</span><small>系统设置</small></button>
+        </div>
+    </section>
+    <p class="page-end">管理端功能为本地交互演示 · 无真实数据</p>
+</main>
+</body>
+</html>

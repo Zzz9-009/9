@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>我的星球 · 羊了个羊：星球</title>
+    <link rel="stylesheet" href="planet.css">
+    <script src="planet.js" defer></script>
+</head>
+<body>
+<h1>24002120207 王振旭</h1>
+<main class="app">
+    <header class="topbar"><a class="back-link" href="planet-home.html">‹ 返回</a><strong>我的星球</strong><a class="top-action" href="planet-settings.html">设置 ⚙</a></header>
+    <section class="profile-head">
+        <span class="avatar">🐑</span><span><strong style="font-size:18px">星球牧羊人</strong><p>Lv.6　青草星球的新朋友</p></span>
+    </section>
+    <div class="stats">
+        <div class="stat"><strong>08</strong><span>闯关次数</span></div><div class="stat"><strong>286</strong><span>星球能量</span></div><div class="stat"><strong>12</strong><span>收集星星</span></div>
+    </div>
+    <section class="section card">
+        <div class="section-title"><h2>我的旅程</h2><a href="planet-worlds.html">查看地图 ›</a></div>
+        <p class="subcopy">青草星球的旅程刚刚开始，下一站正在等你。</p>
+        <p class="subcopy" data-progress-label>已通关 0 / 20 关 · 已解锁至第 1 关</p>
+        <div class="progress" style="margin-top:12px"><span data-level-progress style="width:0%"></span></div>
+    </section>
+    <section class="section card" style="padding:5px 16px">
+        <a class="menu-link" href="planet-tasks.html"><span>🎁</span><strong>每日任务与签到</strong><span class="arrow">›</span></a>
+        <a class="menu-link" href="planet-rank.html"><span>🏆</span><strong>星球排行榜</strong><span class="arrow">›</span></a>
+        <a class="menu-link" href="planet-settings.html"><span>⚙️</span><strong>个人设置</strong><span class="arrow">›</span></a>
+        <a class="menu-link" href="planet-admin.html"><span>🛠️</span><strong>运营管理入口（演示）</strong><span class="arrow">›</span></a>
+    </section>
+    <p class="page-end">羊了个羊：星球 · 玩家主页</p>
+</main>
+<nav class="tabbar" aria-label="主导航">
+    <a href="planet-home.html"><span>🏠</span>首页</a>
+    <a href="planet-worlds.html"><span>🪐</span>星球</a>
+    <a href="planet-rank.html"><span>🏆</span>排行</a>
+    <a href="planet-me.html" aria-current="page"><span>🐑</span>我的</a>
+</nav>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>个人设置 · 羊了个羊：星球</title>
+    <link rel="stylesheet" href="planet.css">
+    <script src="planet.js" defer></script>
+</head>
+<body>
+<h1>24002120207 王振旭</h1>
+<main class="app">
+    <header class="topbar"><a class="back-link" href="planet-me.html">‹ 我的</a><strong>个人设置</strong><a class="top-action" href="planet-home.html">完成</a></header>
+    <p class="eyebrow">YOUR PLANET, YOUR WAY</p>
+    <h1>调整你的星球</h1>
+    <section class="section card">
+        <h2>游戏偏好</h2>
+        <div class="menu-link"><span>🎵</span><strong>背景音乐</strong><button class="switch" type="button" data-setting="planetMusic" role="switch" aria-label="背景音乐"></button></div>
+        <div class="menu-link"><span>🔔</span><strong>任务提醒</strong><button class="switch" type="button" data-setting="planetReminders" role="switch" aria-label="任务提醒"></button></div>
+        <div class="menu-link"><span>✨</span><strong>消除动画</strong><button class="switch" type="button" data-setting="planetEffects" role="switch" aria-label="消除动画"></button></div>
+    </section>
+    <section class="section card">
+        <h2>个人资料</h2>
+        <label class="form-field">牧羊人昵称<input type="text" value="星球牧羊人" maxlength="16"></label>
+        <label class="form-field">喜欢的星球<select><option>青草星球</option><option>泡泡海星</option><option>云朵牧场</option></select></label>
+        <button class="button small" type="button" data-toast="个人资料已保存">保存资料</button>
+    </section>
+    <section class="section card">
+        <a class="menu-link" href="planet-admin.html"><span>🛠️</span><strong>后台管理（演示入口）</strong><span class="arrow">›</span></a>
+        <a class="menu-link" href="planet-home.html"><span>🏠</span><strong>返回星球首页</strong><span class="arrow">›</span></a>
+    </section>
+    <p class="page-end">版本 1.0.0 · 星球原型</p>
+</main>
+</body>
+</html>

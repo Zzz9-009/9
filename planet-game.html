@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#c2ff8b">
+    <title>青草星球 · 闯关中</title>
+    <link rel="stylesheet" href="planet.css">
+    <script src="planet.js" defer></script>
+</head>
+<body class="game-page">
+    <h1>24002120207 王振旭</h1>
+<main class="app game-screen" data-game>
+    <header class="game-header">
+        <button class="game-settings-button" type="button" data-open-settings aria-label="打开游戏设置">⚙</button>
+        <div class="game-date">
+            <span class="date-label">青草星球</span>
+            <strong data-game-date>— 月 — 日 —</strong>
+            <span class="level-track" aria-label="当前关卡进度"><i></i><b data-level-label>01</b></span>
+        </div>
+        <a class="game-score" href="planet-me.html" aria-label="查看我的星球能量">
+            <span>•••</span><span class="score-orbit">◉</span>
+        </a>
+    </header>
+
+    <div class="game-hud">
+        <span class="eyebrow">LEVEL <span data-level-label>01</span></span>
+        <span class="difficulty-tag" data-difficulty>5 种图案 · 2 层堆叠</span>
+    </div>
+    <p class="game-instruction" data-game-description>点击可见方块收集小伙伴，集齐 3 个相同图案即可消除。</p>
+
+    <section class="game-field" aria-label="草地游戏区域">
+        <span class="grass-mark grass-one" aria-hidden="true">〽</span>
+        <span class="grass-mark grass-two" aria-hidden="true">〽</span>
+        <span class="grass-mark grass-three" aria-hidden="true">〽</span>
+        <span class="grass-mark grass-four" aria-hidden="true">〽</span>
+        <div class="tile-grid" aria-label="可选择的游戏方块"></div>
+    </section>
+
+    <section class="wooden-tray" aria-label="小伙伴收集槽">
+        <div class="tray-rail tray-rail-top"></div>
+        <div class="tray-rail tray-rail-bottom"></div>
+        <div class="tray-slots slots" aria-live="polite"></div>
+        <span class="tray-post post-left" aria-hidden="true"></span>
+        <span class="tray-post post-right" aria-hidden="true"></span>
+        <p class="notice" aria-live="polite">集齐 3 个相同图案即可消除</p>
+    </section>
+
+    <div class="game-props" aria-label="游戏道具">
+        <button class="prop-button" type="button" data-game-action="move-out">
+            <span class="prop-icon" aria-hidden="true">⬆</span><strong>移出</strong><span class="prop-plus">+</span>
+        </button>
+        <button class="prop-button" type="button" data-game-action="undo">
+            <span class="prop-icon prop-undo" aria-hidden="true">↶</span><strong>撤回</strong><span class="prop-plus">+</span>
+        </button>
+        <button class="prop-button" type="button" data-game-action="shuffle">
+            <span class="prop-icon" aria-hidden="true">🔀</span><strong>洗牌</strong><span class="prop-plus">+</span>
+        </button>
+    </div>
+</main>
+
+<section class="settings-backdrop hidden" data-settings-panel role="dialog" aria-modal="true" aria-labelledby="game-settings-title">
+    <div class="settings-card">
+        <button class="settings-close" type="button" data-close-settings aria-label="关闭设置">×</button>
+        <p class="eyebrow">A LITTLE QUIET TIME</p>
+        <h2 id="game-settings-title">游戏设置</h2>
+        <p class="subcopy">调整星球上的游玩体验。</p>
+        <div class="menu-link"><span>🎵</span><strong>背景音乐</strong><button class="switch" type="button" data-setting="planetMusic" role="switch" aria-label="背景音乐"></button></div>
+        <div class="menu-link"><span>🔔</span><strong>游戏音效</strong><button class="switch" type="button" data-setting="planetGameSound" role="switch" aria-label="游戏音效"></button></div>
+        <a class="button small" href="planet-settings.html">更多设置</a>
+    </div>
+</section>
+</body>
+</html>

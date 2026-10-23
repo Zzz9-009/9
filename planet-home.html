@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#80caff">
+    <title>羊了个羊：星球 · 星球牧场</title>
+    <link rel="stylesheet" href="planet.css">
+    <script src="planet.js" defer></script>
+</head>
+<body class="home-page">
+<h1>24002120207 王振旭</h1>
+<main class="app home-screen">
+    <header class="home-header">
+        <button class="home-menu-button" type="button" data-open-menu aria-label="打开菜单"><span>☷</span><small>菜单</small><i></i></button>
+        <a class="home-coins" href="planet-tasks.html" aria-label="查看星球能量与每日奖励"><span>🪙</span><strong data-wallet>286</strong><span class="gift">🎁</span></a>
+        <button class="home-profile-button" type="button" data-open-profile aria-label="打开我的名片"><span>●●●</span><b>◎</b></button>
+    </header>
+
+    <section class="home-sky" aria-label="星球天空">
+        <span class="home-cloud cloud-left" aria-hidden="true">☁️</span>
+        <span class="home-cloud cloud-right" aria-hidden="true">☁️</span>
+        <div class="rainbow" aria-hidden="true"><div class="home-planet">🐑</div></div>
+        <div class="home-title"><span>俺的</span><span>小星球</span></div>
+        <span class="ufo" aria-hidden="true">🛸</span>
+    </section>
+
+    <nav class="home-side-nav" aria-label="星球功能">
+        <a href="planet-worlds.html" class="side-game side-left side-one"><span>🐑</span><strong>羊羊大世界</strong></a>
+        <a href="planet-worlds.html" class="side-game side-left side-two"><span>🪐</span><strong>俺的小星球</strong></a>
+        <a href="planet-tasks.html" class="side-game side-left side-three"><span>🚀</span><strong>羊羊飞船</strong></a>
+        <a href="planet-game.html" data-level-link class="side-game side-right side-one"><span>🐑🐑</span><strong>玩一玩</strong></a>
+        <a href="planet-shop.html" class="side-game side-right side-two"><span>🛒</span><strong>羊羊商店</strong></a>
+        <a href="planet-worlds.html" class="side-game side-right side-three"><span>🃏</span><strong>玩家关卡</strong></a>
+    </nav>
+
+    <section class="home-barn" aria-label="我的青草星球牧场">
+        <div class="barn-roof"><span></span></div>
+        <div class="barn-building"><div class="barn-door"><span>🐑</span></div></div>
+        <span class="yard-sheep sheep-left">🐑</span>
+        <span class="yard-sheep sheep-center">🐑</span>
+        <span class="yard-sheep sheep-right">🐑</span>
+        <span class="yard-fence"></span>
+    </section>
+
+    <section class="home-flock" aria-label="星球上的羊群">
+        <div class="flock-animals" aria-hidden="true"><span>🐑</span><span>🐏</span><span>🐑</span><span>🐑</span><span>🐏</span><span>🐑</span><span>🐑</span><span>🐏</span><span>🐑</span><span>🐑</span><span>🐏</span><span>🐑</span></div>
+        <a class="home-rank-button" href="planet-rank.html"><span>📊</span><strong>排行榜</strong></a>
+        <a class="home-join-button" href="planet-worlds.html"><strong>加入羊群</strong><span>青草星球 · 第 <i data-current-level>01</i> 关已解锁</span></a>
+        <a class="home-collection-button" href="planet-me.html"><span>⭐</span><strong>收藏</strong></a>
+    </section>
+
+    <footer class="home-footer">
+        <span>星球牧羊人</span><strong>广东 · 青青草原</strong>
+        <a href="planet-game.html" data-level-link>开始闯关 →</a>
+    </footer>
+</main>
+
+<section class="game-modal-backdrop hidden" data-menu-panel role="dialog" aria-modal="true" aria-labelledby="menu-title">
+    <div class="game-modal menu-modal">
+        <button class="modal-x" type="button" data-close-menu aria-label="关闭菜单">×</button>
+        <p class="eyebrow">SHEEP PLANET</p>
+        <h2 id="menu-title">星球菜单</h2>
+        <div class="menu-shortcuts">
+            <a href="planet-worlds.html"><span>🪐</span><strong>星球地图</strong><small>继续探索</small></a>
+            <a href="planet-tasks.html"><span>🎁</span><strong>每日任务</strong><small>领取奖励</small></a>
+            <a href="planet-rank.html"><span>🏆</span><strong>排行榜</strong><small>羊群榜单</small></a>
+            <a href="planet-me.html"><span>🎒</span><strong>我的收藏</strong><small>查看伙伴</small></a>
+            <a href="planet-shop.html"><span>🛒</span><strong>羊羊商店</strong><small>兑换装扮</small></a>
+            <a href="planet-settings.html"><span>🛠️</span><strong>运营后台</strong><small>管理演示</small></a>
+            <button type="button" data-open-profile><span>🐑</span><strong>我的名片</strong><small>个人资料</small></button>
+            <button type="button" data-open-settings><span>⚙️</span><strong>游戏设置</strong><small>调整体验</small></button>
+        </div>
+    </div>
+</section>
+
+<section class="game-modal-backdrop hidden" data-profile-panel role="dialog" aria-modal="true" aria-labelledby="profile-title">
+    <div class="game-modal profile-modal">
+        <button class="modal-x" type="button" data-close-profile aria-label="关闭名片">×</button>
+        <header class="profile-modal-heading"><span id="profile-title">俺的名片</span></header>
+        <div class="profile-card-content">
+            <div class="profile-avatar-column">
+                <button class="profile-avatar-button" type="button" data-avatar-cycle aria-label="更换头像">🐑<i>⟳</i></button>
+                <button class="profile-name" type="button" data-edit-profile="name" data-profile-name>星球牧羊人</button>
+                <span class="profile-costume">🐑 🎀 🐑</span>
+            </div>
+            <div class="profile-data">
+                <label><strong>好友编号</strong><span data-profile-id>XY-20261014</span><button type="button" data-copy="profile-id">复制</button></label>
+                <label><strong>性别</strong><span data-profile-value="gender">未设置</span><button type="button" data-edit-profile="gender">设置</button></label>
+                <label><strong>装扮数量</strong><span data-profile-value="costumes">3 羊</span></label>
+                <label><strong>地区</strong><span data-profile-value="region">未设置</span><button type="button" data-edit-profile="region">设置</button></label>
+                <label><strong>当前段位</strong><span data-profile-value="rank">新手牧羊人</span></label>
+                <label><strong>称号</strong><span data-profile-value="title">星球新朋友</span><button type="button" data-edit-profile="title">设置</button></label>
+                <label><strong>所属星球</strong><span data-profile-value="world">青草星球</span></label>
+            </div>
+        </div>
+        <footer class="profile-card-footer"><span>注册日期：2026年10月14日</span><span>UID: 67c7bfc498583ec7</span><button type="button" data-copy="profile-id">复制</button></footer>
+    </div>
+</section>
+
+<section class="game-modal-backdrop hidden" data-settings-panel role="dialog" aria-modal="true" aria-labelledby="home-settings-title">
+    <div class="game-modal settings-modal">
+        <button class="modal-x" type="button" data-close-settings aria-label="关闭设置">×</button>
+        <header class="settings-modal-heading" id="home-settings-title">设置</header>
+        <div class="settings-list">
+            <div class="settings-row"><span class="settings-symbol">🔊</span><strong>音效</strong><button class="switch" type="button" data-setting="planetGameSound" role="switch" aria-label="音效"></button></div>
+            <div class="settings-row"><span class="settings-symbol">♫</span><strong>音乐</strong><button class="switch" type="button" data-setting="planetMusic" role="switch" aria-label="音乐"></button></div>
+            <div class="settings-row"><span class="settings-symbol">📳</span><strong>震动</strong><button class="switch" type="button" data-setting="planetVibration" role="switch" aria-label="震动"></button></div>
+            <div class="settings-row"><span class="settings-symbol">🌙</span><strong>夜间模式</strong><button class="switch" type="button" data-setting="planetNightMode" role="switch" aria-label="夜间模式"></button></div>
+            <div class="settings-row is-disabled"><span class="settings-symbol">◎</span><strong>大羊圈</strong><button class="switch" type="button" role="switch" aria-label="大羊圈" disabled></button></div>
+            <div class="settings-row"><span class="settings-symbol">✨</span><strong>消除效果</strong><button class="switch" type="button" data-setting="planetEffects" role="switch" aria-label="消除效果"></button></div>
+        </div>
+        <div class="settings-actions">
+            <button type="button" data-toast="问题反馈入口（演示）">问题反馈</button>
+            <button type="button" data-toast="客服联系方式（演示）">联系客服</button>
+            <button class="official-button" type="button" data-toast="官方社交账号（演示）">✳ 官方动态</button>
+        </div>
+        <p class="settings-uid">用户ID: 67c7bfc498583ec7 <button type="button" data-copy="profile-id">复制</button></p>
+        <a class="privacy-link" href="planet-settings.html">《隐私保护声明及监护人须知》</a>
+    </div>
+</section>
+
+<section class="game-modal-backdrop profile-edit-backdrop hidden" data-profile-edit-panel role="dialog" aria-modal="true" aria-labelledby="profile-edit-heading">
+    <form class="game-modal profile-edit-modal" data-profile-edit-form>
+        <button class="modal-x" type="button" data-cancel-profile-edit aria-label="关闭编辑">×</button>
+        <p class="eyebrow">UPDATE YOUR CARD</p>
+        <h2 id="profile-edit-heading">编辑名片资料</h2>
+        <label class="form-field"><span data-edit-field-label>牧羊人昵称</span><input type="text" data-profile-edit-input maxlength="20" required></label>
+        <div class="profile-edit-actions">
+            <button class="button light small" type="button" data-cancel-profile-edit>取消</button>
+            <button class="button small" type="submit">保存</button>
+        </div>
+    </form>
+</section>
+</body>
+</html>
