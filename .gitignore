@@ -1,0 +1,14 @@
+# 本地运行时与大体积依赖（合计约 900 MB）
+/Git/
+/npm/
+
+# 编辑器 / 工具生成的缓存目录
+/.trae-html-share-packages/
+node_modules/
+.cache/
+dist/
+
+# 系统与日志文件
+Thumbs.db
+.DS_Store
+*.log
