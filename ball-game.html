@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="抓小球小游戏：2 分钟内点击蓝色小球得分">
+    <title>抓小球 · 高级网页设计课堂实践</title>
+    <style>
+        :root {
+            --wzx_bg: #FFF9C4;
+            --wzx_ball: #2196F3;
+            --wzx_ballDark: #1976D2;
+            --wzx_ink: #2b2b1f;
+            --wzx_muted: #7a7550;
+            --wzx_line: #e8e2a8;
+            --wzx_up: #4CAF50;
+            --wzx_down: #F44336;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+            flex-direction: column;
+            color: var(--wzx_ink);
+            background: var(--wzx_bg);
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            line-height: 1.5;
+        }
+
+        .wzx_srOnly {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .wzx_toolbar {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px 22px;
+            padding: 12px 20px;
+            background: #ffffff;
+            border-bottom: 1px solid var(--wzx_line);
+            box-shadow: 0 2px 10px rgba(120, 110, 40, 0.12);
+        }
+
+        .wzx_stat {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .wzx_statLabel {
+            font-size: 13px;
+            color: var(--wzx_muted);
+        }
+
+        .wzx_statValue {
+            display: inline-block;
+            min-width: 2.2em;
+            font-size: 22px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .wzx_timeLow { color: var(--wzx_down); }
+
+        .wzx_scoreUp {
+            color: var(--wzx_up);
+            animation: wzx_pop 200ms ease-out;
+        }
+
+        .wzx_scoreDown {
+            color: var(--wzx_down);
+            animation: wzx_shake 200ms ease-out;
+        }
+
+        @keyframes wzx_pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.25); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes wzx_shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        .wzx_btn {
+            margin-left: auto;
+            padding: 9px 22px;
+            border: 0;
+            border-radius: 999px;
+            color: #ffffff;
+            background: var(--wzx_ball);
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .wzx_btn:hover { background: var(--wzx_ballDark); }
+
+        .wzx_btn:focus-visible {
+            outline: 3px solid rgba(33, 150, 243, 0.4);
+            outline-offset: 2px;
+        }
+
+        .wzx_btn:disabled {
+            background: #b0bec5;
+            cursor: not-allowed;
+        }
+
+        .wzx_playfield {
+            position: relative;
+            flex: 1 1 auto;
+            min-height: 320px;
+            overflow: hidden;
+            background: var(--wzx_bg);
+            touch-action: manipulation;
+        }
+
+        .wzx_ball {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--wzx_ball);
+            cursor: pointer;
+            transform: scale(0);
+            transition: transform 200ms ease-out;
+        }
+
+        .wzx_ball:hover { filter: brightness(1.08); }
+
+        .wzx_ballShown { transform: scale(1); }
+
+        .wzx_countdown {
+            position: absolute;
+            z-index: 20;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            color: var(--wzx_ball);
+            background: rgba(255, 249, 196, 0.82);
+            font-size: clamp(72px, 18vw, 140px);
+            font-weight: 900;
+        }
+
+        .wzx_countdown[hidden] { display: none; }
+
+        .wzx_result {
+            position: absolute;
+            z-index: 30;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            background: rgba(43, 43, 31, 0.35);
+        }
+
+        .wzx_result[hidden] { display: none; }
+
+        .wzx_resultCard {
+            width: min(360px, 100%);
+            padding: 28px 26px;
+            border-radius: 18px;
+            background: #ffffff;
+            box-shadow: 0 18px 40px rgba(60, 50, 10, 0.25);
+            text-align: center;
+        }
+
+        .wzx_resultTitle {
+            margin: 0 0 16px;
+            font-size: 22px;
+        }
+
+        .wzx_resultLine {
+            margin: 8px 0;
+            color: var(--wzx_muted);
+            font-size: 15px;
+        }
+
+        .wzx_resultLine strong {
+            display: block;
+            font-size: 32px;
+            color: var(--wzx_ink);
+        }
+
+        .wzx_restartBtn {
+            margin: 18px auto 0;
+            display: block;
+        }
+
+        @media (max-width: 480px) {
+            .wzx_toolbar { padding: 10px 14px; gap: 6px 14px; }
+            .wzx_statValue { font-size: 18px; }
+            .wzx_btn { padding: 8px 16px; }
+            .wzx_resultCard { padding: 22px 18px; }
+        }
+
+        @media (max-width: 360px) {
+            .wzx_stat { gap: 5px; }
+            .wzx_statLabel { font-size: 12px; }
+            .wzx_statValue { min-width: 2em; font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="wzx_srOnly">抓小球小游戏</h1>
+
+    <header class="wzx_toolbar">
+        <div class="wzx_stat">
+            <span class="wzx_statLabel">最高分</span>
+            <span class="wzx_statValue" id="wzx_highScore">0</span>
+        </div>
+        <div class="wzx_stat">
+            <span class="wzx_statLabel">分数</span>
+            <span class="wzx_statValue" id="wzx_score">0</span>
+        </div>
+        <div class="wzx_stat">
+            <span class="wzx_statLabel">时间</span>
+            <span class="wzx_statValue" id="wzx_time">02:00</span>
+        </div>
+        <button class="wzx_btn" id="wzx_startBtn" type="button">开始</button>
+    </header>
+
+    <main class="wzx_playfield" id="wzx_playfield" aria-label="游戏区域">
+        <div class="wzx_countdown" id="wzx_countdown" hidden>3</div>
+
+        <section class="wzx_result" id="wzx_resultPanel" aria-labelledby="wzx_resultTitle" hidden>
+            <div class="wzx_resultCard">
+                <h2 class="wzx_resultTitle" id="wzx_resultTitle">游戏结束</h2>
+                <p class="wzx_resultLine">本局得分 <strong id="wzx_finalScore">0</strong></p>
+                <p class="wzx_resultLine">历史最高 <strong id="wzx_resultRecord">0</strong></p>
+                <button class="wzx_btn wzx_restartBtn" id="wzx_restartBtn" type="button">再来一局</button>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        (function () {
+            'use strict';
+
+            var wzx_gameSeconds = 120;
+            var wzx_countdownFrom = 3;
+            var wzx_ballMinSize = 30;
+            var wzx_ballMaxSize = 70;
+            var wzx_ballGap = 20;
+            var wzx_repositionGap = 40;
+            var wzx_clickCooldown = 100;
+            var wzx_storageKey = 'wzx_ballGameHighScore';
+            var wzx_fxDuration = 260;
+
+            var wzx_playfield = document.getElementById('wzx_playfield');
+            var wzx_countdownOverlay = document.getElementById('wzx_countdown');
+            var wzx_resultPanel = document.getElementById('wzx_resultPanel');
+            var wzx_scoreEl = document.getElementById('wzx_score');
+            var wzx_highScoreEl = document.getElementById('wzx_highScore');
+            var wzx_timeEl = document.getElementById('wzx_time');
+            var wzx_finalScoreEl = document.getElementById('wzx_finalScore');
+            var wzx_resultRecordEl = document.getElementById('wzx_resultRecord');
+            var wzx_startBtn = document.getElementById('wzx_startBtn');
+            var wzx_restartBtn = document.getElementById('wzx_restartBtn');
+
+            var wzx_state = {
+                phase: 'idle',
+                score: 0,
+                timeLeft: wzx_gameSeconds
+            };
+
+            var wzx_countdownTimer = null;
+            var wzx_gameTimer = null;
+            var wzx_ballEl = null;
+            var wzx_lastBallX = -999;
+            var wzx_lastActionAt = 0;
+            var wzx_highScore = 0;
+            var wzx_scoreFxTimer = null;
+
+            // 取 [最小, 最大] 闭区间随机整数
+            function wzx_randomInt(wzx_min, wzx_max) {
+                return Math.floor(Math.random() * (wzx_max - wzx_min + 1)) + wzx_min;
+            }
+
+            // 秒数转 mm:ss
+            function wzx_formatTime(wzx_totalSeconds) {
+                var wzx_minutes = Math.floor(wzx_totalSeconds / 60);
+                var wzx_seconds = wzx_totalSeconds % 60;
+                return String(wzx_minutes).padStart(2, '0') + ':' + String(wzx_seconds).padStart(2, '0');
+            }
+
+            function wzx_renderTime() {
+                wzx_timeEl.textContent = wzx_formatTime(wzx_state.timeLeft);
+                var wzx_isLow = wzx_state.phase === 'playing' && wzx_state.timeLeft <= 10;
+                wzx_timeEl.classList.toggle('wzx_timeLow', wzx_isLow);
+            }
+
+            // 先移除再强制回流，确保同一动画可以连续重播
+            function wzx_playScoreFx(wzx_className) {
+                wzx_scoreEl.classList.remove('wzx_scoreUp', 'wzx_scoreDown');
+                void wzx_scoreEl.offsetWidth;
+                wzx_scoreEl.classList.add(wzx_className);
+                clearTimeout(wzx_scoreFxTimer);
+                wzx_scoreFxTimer = setTimeout(function () {
+                    wzx_scoreEl.classList.remove(wzx_className);
+                }, wzx_fxDuration);
+            }
+
+            function wzx_renderScore(wzx_delta) {
+                wzx_scoreEl.textContent = String(wzx_state.score);
+                if (wzx_delta > 0) {
+                    wzx_playScoreFx('wzx_scoreUp');
+                } else if (wzx_delta < 0) {
+                    wzx_playScoreFx('wzx_scoreDown');
+                }
+            }
+
+            function wzx_loadHighScore() {
+                var wzx_saved = 0;
+                try {
+                    wzx_saved = parseInt(window.localStorage.getItem(wzx_storageKey), 10);
+                } catch (wzx_error) {
+                    wzx_saved = 0;
+                }
+                wzx_highScore = isNaN(wzx_saved) || wzx_saved < 0 ? 0 : wzx_saved;
+                wzx_highScoreEl.textContent = String(wzx_highScore);
+            }
+
+            function wzx_updateHighScore() {
+                if (wzx_state.score <= wzx_highScore) {
+                    return;
+                }
+                wzx_highScore = wzx_state.score;
+                wzx_highScoreEl.textContent = String(wzx_highScore);
+                try {
+                    window.localStorage.setItem(wzx_storageKey, String(wzx_highScore));
+                } catch (wzx_error) {
+                    // 隐私模式等场景写入失败时忽略，不影响游戏
+                }
+            }
+
+            function wzx_removeBall() {
+                if (wzx_ballEl && wzx_ballEl.parentNode) {
+                    wzx_ballEl.parentNode.removeChild(wzx_ballEl);
+                }
+                wzx_ballEl = null;
+            }
+
+            // 在游戏区域内随机生成唯一小球
+            function wzx_spawnBall() {
+                wzx_removeBall();
+
+                var wzx_size = wzx_randomInt(wzx_ballMinSize, wzx_ballMaxSize);
+                var wzx_rect = wzx_playfield.getBoundingClientRect();
+                var wzx_maxX = Math.max(wzx_ballGap, Math.round(wzx_rect.width - wzx_size - wzx_ballGap));
+                var wzx_maxY = Math.max(wzx_ballGap, Math.round(wzx_rect.height - wzx_size - wzx_ballGap));
+
+                var wzx_x = wzx_randomInt(wzx_ballGap, wzx_maxX);
+                var wzx_attempts = 0;
+                while (Math.abs(wzx_x - wzx_lastBallX) < wzx_repositionGap &&
+                       wzx_attempts < 20 &&
+                       wzx_maxX - wzx_ballGap >= wzx_repositionGap) {
+                    wzx_x = wzx_randomInt(wzx_ballGap, wzx_maxX);
+                    wzx_attempts++;
+                }
+                var wzx_y = wzx_randomInt(wzx_ballGap, wzx_maxY);
+
+                var wzx_ball = document.createElement('div');
+                wzx_ball.className = 'wzx_ball';
+                wzx_ball.style.width = wzx_size + 'px';
+                wzx_ball.style.height = wzx_size + 'px';
+                wzx_ball.style.left = wzx_x + 'px';
+                wzx_ball.style.top = wzx_y + 'px';
+
+                wzx_playfield.appendChild(wzx_ball);
+                wzx_ballEl = wzx_ball;
+                wzx_lastBallX = wzx_x;
+
+                window.requestAnimationFrame(function () {
+                    wzx_ball.classList.add('wzx_ballShown');
+                });
+            }
+
+            // 游戏区域点击：点中球 +2 并换位；点空白 -1 且球原地不动
+            function wzx_handlePlayfieldClick(wzx_event) {
+                if (wzx_state.phase !== 'playing') {
+                    return;
+                }
+                var wzx_now = Date.now();
+                if (wzx_now - wzx_lastActionAt < wzx_clickCooldown) {
+                    return;
+                }
+                wzx_lastActionAt = wzx_now;
+
+                var wzx_delta = 0;
+                if (wzx_event.target.closest('.wzx_ball')) {
+                    wzx_state.score += 2;
+                    wzx_delta = 2;
+                    wzx_removeBall();
+                    wzx_spawnBall();
+                } else {
+                    var wzx_before = wzx_state.score;
+                    wzx_state.score = Math.max(0, wzx_before - 1);
+                    wzx_delta = wzx_state.score - wzx_before;
+                }
+                wzx_renderScore(wzx_delta);
+                wzx_updateHighScore();
+            }
+
+            // 开始按钮：倒数 3-2-1 后正式计时
+            function wzx_handleStart() {
+                if (wzx_state.phase === 'countdown' || wzx_state.phase === 'playing') {
+                    return;
+                }
+                wzx_startBtn.disabled = true;
+                wzx_resultPanel.hidden = true;
+                wzx_state.phase = 'countdown';
+
+                var wzx_count = wzx_countdownFrom;
+                wzx_countdownOverlay.textContent = String(wzx_count);
+                wzx_countdownOverlay.hidden = false;
+
+                wzx_countdownTimer = setInterval(function () {
+                    wzx_count--;
+                    if (wzx_count > 0) {
+                        wzx_countdownOverlay.textContent = String(wzx_count);
+                        return;
+                    }
+                    clearInterval(wzx_countdownTimer);
+                    wzx_countdownTimer = null;
+                    wzx_countdownOverlay.hidden = true;
+                    wzx_startPlaying();
+                }, 1000);
+            }
+
+            function wzx_startPlaying() {
+                wzx_state.phase = 'playing';
+                wzx_state.score = 0;
+                wzx_state.timeLeft = wzx_gameSeconds;
+                wzx_lastActionAt = 0;
+                wzx_lastBallX = -999;
+                wzx_renderScore();
+                wzx_renderTime();
+                wzx_spawnBall();
+                wzx_gameTimer = setInterval(wzx_tick, 1000);
+            }
+
+            function wzx_tick() {
+                wzx_state.timeLeft--;
+                wzx_renderTime();
+                if (wzx_state.timeLeft <= 0) {
+                    wzx_endGame();
+                }
+            }
+
+            function wzx_endGame() {
+                clearInterval(wzx_gameTimer);
+                wzx_gameTimer = null;
+                wzx_state.phase = 'ended';
+                wzx_timeEl.textContent = wzx_formatTime(0);
+                wzx_timeEl.classList.remove('wzx_timeLow');
+                wzx_startBtn.disabled = false;
+                wzx_removeBall();
+                wzx_finalScoreEl.textContent = String(wzx_state.score);
+                wzx_resultRecordEl.textContent = String(wzx_highScore);
+                wzx_resultPanel.hidden = false;
+            }
+
+            wzx_startBtn.addEventListener('click', wzx_handleStart);
+            wzx_restartBtn.addEventListener('click', wzx_handleStart);
+            wzx_playfield.addEventListener('click', wzx_handlePlayfieldClick);
+            wzx_loadHighScore();
+            wzx_renderTime();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抓小球游戏</title>
+</head>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #f0f0f0;
+        font-size: 16px;
+    }
+
+    #info {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-size: 20px;
+        font-weight: bold;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 10px;
+        color: #333;
+    }
+
+    .ball {
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: aqua;
+        cursor: pointer;
+    }
+</style>
+<body>
+    <div id='info'>当前分数：<span id='score'>0</span></div>
+    <script>
+        const BALL_SIZE = 50;
+        const BALL_STEP = 55;
+        const BALLS_PER_WAVE = 5;
+        const game = {
+            score: 0,
+            balls: [],
+        };
+
+        function updateScore(){
+            document.getElementById('score').innerText = game.score;
+        }
+
+        function getAvailablePositions(){
+            const columns = Math.max(1, Math.floor((window.innerWidth - BALL_SIZE) / BALL_STEP) + 1);
+            const rows = Math.max(1, Math.floor((window.innerHeight - BALL_SIZE) / BALL_STEP) + 1);
+            const positions = [];
+
+            for (let row = 0; row < rows; row++){
+                for (let column = 0; column < columns; column++){
+                    positions.push({ x: column * BALL_STEP, y: row * BALL_STEP });
+                }
+            }
+
+            for (let i = positions.length - 1; i > 0; i--){
+                const j = Math.floor(Math.random() * (i + 1));
+                [positions[i], positions[j]] = [positions[j], positions[i]];
+            }
+
+            return positions;
+        }
+
+        function moveBalls(){
+            const positions = getAvailablePositions();
+            game.balls.forEach(function(ball, index){
+                const position = positions[index];
+                if (!position) return;
+                ball.style.left = position.x + 'px';
+                ball.style.top = position.y + 'px';
+            });
+        }
+
+        function createWave(){
+            const positions = getAvailablePositions();
+            const ballCount = Math.min(BALLS_PER_WAVE, positions.length);
+
+            for (let i = 0; i < ballCount; i++){
+                const ball = document.createElement('div');
+                ball.className = 'ball';
+                ball.addEventListener('click', function(e){
+                    e.stopPropagation();
+                    ball.remove();
+                    game.balls = game.balls.filter(function(currentBall){
+                        return currentBall !== ball;
+                    });
+                    game.score++;
+                    updateScore();
+
+                    if (game.balls.length === 0){
+                        createWave();
+                    }
+                });
+                document.body.appendChild(ball);
+                game.balls.push(ball);
+            }
+
+            moveBalls();
+        }
+
+        document.addEventListener('click', function(e){
+            if (e.target.closest('#info')) return;
+            game.score--;
+            updateScore();
+        });
+
+        createWave();
+        setInterval(moveBalls, 2000);
+    </script>
+</body>
+</html>
