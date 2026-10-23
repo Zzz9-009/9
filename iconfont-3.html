@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="移动端固定底部导航练习 · 字体图标版本">
+    <title>底部导航 · 字体图标</title>
+    <link rel="stylesheet" href="./font/iconfont.css">
+    <style>
+        :root {
+            --wzx_ink: #172033;
+            --wzx_muted: #687386;
+            --wzx_paper: #f7f8fb;
+            --wzx_white: #ffffff;
+            --wzx_blue: #3458d3;
+            --wzx_blue-dark: #20398f;
+            --wzx_blue-soft: #edf1ff;
+            --wzx_yellow: #f5c451;
+            --wzx_line: #e5e8ef;
+            --wzx_nav-height: 64px;
+            --wzx_shell: 520px;
+        }
+
+        * { box-sizing: border-box; }
+
+        html { -webkit-text-size-adjust: 100%; }
+
+        body {
+            min-width: 320px;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--wzx_ink);
+            background: var(--wzx_paper);
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            line-height: 1.6;
+        }
+
+        .wzx_page {
+            position: relative;
+            width: min(100% - 32px, var(--wzx_shell));
+            margin: 0 auto;
+            padding: 34px 0 calc(var(--wzx_nav-height) + env(safe-area-inset-bottom) + 36px);
+        }
+
+        .wzx_page::before {
+            position: absolute;
+            z-index: -1;
+            top: -120px;
+            right: -130px;
+            width: 300px;
+            height: 300px;
+            border: 1px solid rgba(52, 88, 211, 0.14);
+            border-radius: 50%;
+            box-shadow: 0 0 0 26px rgba(52, 88, 211, 0.035);
+            content: "";
+        }
+
+        .wzx_header { padding: 8px 0 26px; }
+
+        .wzx_student {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 16px;
+            color: var(--wzx_blue);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+        }
+
+        .wzx_student::before {
+            width: 22px;
+            height: 3px;
+            background: var(--wzx_yellow);
+            content: "";
+        }
+
+        .wzx_title {
+            margin: 0;
+            font-size: clamp(30px, 8vw, 38px);
+            line-height: 1.15;
+            letter-spacing: -0.04em;
+        }
+
+        .wzx_subtitle {
+            margin: 10px 0 0;
+            color: var(--wzx_blue);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+        }
+
+        .wzx_hint {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 18px 0 0;
+            color: var(--wzx_muted);
+            font-size: 12px;
+        }
+
+        .wzx_hint::before {
+            width: 6px;
+            height: 6px;
+            flex: 0 0 auto;
+            background: var(--wzx_blue);
+            border-radius: 50%;
+            content: "";
+        }
+
+        .wzx_panel[hidden] { display: none; }
+
+        .wzx_panel { animation: wzx_panel-in 220ms ease both; }
+
+        @keyframes wzx_panel-in {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        .wzx_panel-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin: 0 0 14px;
+        }
+
+        .wzx_panel-kicker {
+            margin: 0 0 3px;
+            color: var(--wzx_muted);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+        }
+
+        .wzx_panel-title {
+            margin: 0;
+            font-size: 21px;
+            line-height: 1.35;
+            letter-spacing: -0.02em;
+        }
+
+        .wzx_panel-tag {
+            flex: 0 0 auto;
+            margin-top: 2px;
+            padding: 4px 9px;
+            color: var(--wzx_blue);
+            background: var(--wzx_blue-soft);
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .wzx_panel-desc {
+            margin: 0 0 18px;
+            color: var(--wzx_muted);
+            font-size: 13px;
+        }
+
+        .wzx_card {
+            padding: 8px 18px;
+            border: 1px solid var(--wzx_line);
+            background: var(--wzx_white);
+            box-shadow: 0 6px 0 rgba(23, 32, 51, 0.015);
+        }
+
+        .wzx_row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 0;
+        }
+
+        .wzx_row + .wzx_row { border-top: 1px solid var(--wzx_line); }
+
+        .wzx_row-icon {
+            display: grid;
+            width: 36px;
+            height: 36px;
+            flex: 0 0 auto;
+            place-items: center;
+            color: var(--wzx_blue);
+            background: var(--wzx_blue-soft);
+            border-radius: 10px;
+            font-size: 18px;
+        }
+
+        .wzx_row-text { min-width: 0; flex: 1 1 auto; }
+
+        .wzx_row-title {
+            margin: 0;
+            overflow: hidden;
+            font-size: 14px;
+            font-weight: 700;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .wzx_row-note {
+            margin: 2px 0 0;
+            overflow: hidden;
+            color: var(--wzx_muted);
+            font-size: 12px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .wzx_row-meta {
+            flex: 0 0 auto;
+            color: var(--wzx_muted);
+            font-size: 11px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .wzx_nav {
+            position: fixed;
+            z-index: 10;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            max-width: var(--wzx_shell);
+            margin: 0 auto;
+            padding-bottom: env(safe-area-inset-bottom);
+            border-top: 1px solid var(--wzx_line);
+            background: rgba(255, 255, 255, 0.94);
+            box-shadow: 0 -10px 30px rgba(31, 48, 87, 0.06);
+            -webkit-backdrop-filter: blur(14px);
+            backdrop-filter: blur(14px);
+        }
+
+        .wzx_nav-list {
+            display: flex;
+            align-items: stretch;
+            height: var(--wzx_nav-height);
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .wzx_nav-cell { flex: 1 1 0; min-width: 0; }
+
+        .wzx_nav-item {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            min-width: 44px;
+            min-height: 44px;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            flex-direction: column;
+            padding: 6px 2px 5px;
+            color: var(--wzx_muted);
+            background: none;
+            border: 0;
+            border-radius: 0;
+            font-family: inherit;
+            font-size: 11px;
+            line-height: 1.2;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .wzx_nav-item:focus-visible {
+            outline: 2px solid var(--wzx_blue);
+            outline-offset: -3px;
+        }
+
+        .wzx_nav-icon {
+            position: relative;
+            display: grid;
+            width: 38px;
+            height: 28px;
+            place-items: center;
+            border-radius: 9px;
+            transition: background-color 180ms ease, color 180ms ease;
+        }
+
+        .wzx_nav-icon .iconfont {
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .wzx_nav-badge {
+            position: absolute;
+            top: -3px;
+            right: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 16px;
+            height: 16px;
+            padding: 0 4px;
+            color: var(--wzx_white);
+            background: #e5484d;
+            border: 2px solid var(--wzx_white);
+            border-radius: 999px;
+            box-shadow: 0 1px 4px rgba(23, 32, 51, 0.18);
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .wzx_nav-dot {
+            position: absolute;
+            top: -11px;
+            right: -5px;
+            width: 8px;
+            height: 8px;
+            background: #e5484d;
+            border: 2px solid var(--wzx_white);
+            border-radius: 50%;
+        }
+
+        .wzx_nav-badge.wzx_is-clearing,
+        .wzx_nav-dot.wzx_is-clearing {
+            animation: wzx_badge-out 200ms ease forwards;
+        }
+
+        .wzx_nav-badge[hidden],
+        .wzx_nav-dot[hidden] { display: none; }
+
+        @keyframes wzx_badge-out {
+            to { opacity: 0; transform: scale(0.6); }
+        }
+
+        .wzx_nav-label {
+            overflow: hidden;
+            max-width: 100%;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .wzx_nav-item.wzx_is-active { color: var(--wzx_blue); }
+
+        .wzx_nav-item.wzx_is-active .wzx_nav-icon { background: var(--wzx_blue-soft); }
+
+        .wzx_nav-item.wzx_is-active .wzx_nav-label { font-weight: 700; }
+
+        @media (min-width: 560px) {
+            .wzx_nav {
+                border-right: 1px solid var(--wzx_line);
+                border-left: 1px solid var(--wzx_line);
+                border-radius: 18px 18px 0 0;
+            }
+        }
+
+        @media (max-width: 359px) {
+            .wzx_page { width: calc(100% - 24px); }
+            .wzx_nav-icon { width: 34px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .wzx_nav-icon { transition: none; }
+            .wzx_panel { animation: none; }
+            .wzx_nav-badge.wzx_is-clearing,
+            .wzx_nav-dot.wzx_is-clearing { animation: none; opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <main class="wzx_page">
+        <header class="wzx_header">
+            <p class="wzx_student">24002120207 · 王振旭</p>
+            <h1 class="wzx_title">底部导航</h1>
+            <p class="wzx_subtitle">字体图标 · 固定导航 / FONT ICON</p>
+            <p class="wzx_hint">点击导航项可切换内容并清除未读</p>
+        </header>
+
+        <section class="wzx_panel" id="wzx_panel_home" data-wzx-panel="home" aria-label="首页内容">
+            <div class="wzx_panel-head">
+                <div>
+                    <p class="wzx_panel-kicker">HOME / 首页</p>
+                    <h2 class="wzx_panel-title">今天从哪里开始？</h2>
+                </div>
+                <span class="wzx_panel-tag">进行中</span>
+            </div>
+            <p class="wzx_panel-desc">四项导航对应四个内容区，下方示例展示课堂练习的进度。</p>
+            <div class="wzx_card">
+                <div class="wzx_row">
+                    <span class="wzx_row-icon" aria-hidden="true"><i class="iconfont icon-xiaofangzi"></i></span>
+                    <div class="wzx_row-text">
+                        <p class="wzx_row-title">Flex 布局复习</p>
+                        <p class="wzx_row-note">导航布局与三列等分布局</p>
+                    </div>
+                    <span class="wzx_row-meta">已完成</span>
+                </div>
+                <div class="wzx_row">
+                    <span class="wzx_row-icon" aria-hidden="true"><i class="iconfont icon-tushu"></i></span>
+                    <div class="wzx_row-text">
+                        <p class="wzx_row-title">图标导航练习</p>
+                        <p class="wzx_row-note">本地 iconfont 字体图标接入</p>
+                    </div>
+                    <span class="wzx_row-meta">进行中</span>
+                </div>
+                <div class="wzx_row">
+                    <span class="wzx_row-icon" aria-hidden="true"><i class="iconfont icon-shu1"></i></span>
+                    <div class="wzx_row-text">
+                        <p class="wzx_row-title">课堂实践目录</p>
+                        <p class="wzx_row-note">整理本周的练习入口</p>
+                    </div>
+                    <span class="wzx_row-meta">06 项</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="wzx_panel" id="wzx_panel_video" data-wzx-panel="video" aria-label="视频内容" hidden>
+            <div class="wzx_panel-head">
+                <div>
+                    <p class="wzx_panel-kicker">VIDEO / 视频</p>
+                    <h2 class="wzx_panel-title">课程回放</h2>
+                </div>
+                <span class="wzx_panel-tag">3 节</span>
+            </div>
+            <p class="wzx_panel-desc">按课堂进度整理的回放列表，仅作导航切换演示。</p>
+            <div class="wzx_card">
+                <div class="wzx_row">
+                    <span class="wzx_row-icon" aria-hidden="true"><i class="iconfont icon-shipin"></i></span>
+                    <div class="wzx_row-text">
+                        <p class="wzx_row-title">第 04 讲 · 响应式布局</p>
+                        <p class="wzx_row-note">媒体查询与流式宽度</p>
+                    </div>
+                    <span class="wzx_row-meta">18:24</span>
+                </div>
+                <div class="wzx_row">
+                    <span class="wzx_row-icon" aria-hidden="true"><i class="iconfont icon-tushu-copy"></i></span>
+                    <div class="wzx_row-text">
+                        <p class="wzx_row-title">第 03 讲 · 字体图标</p>
+                        <p class="wzx_row-note">iconfont 的引入与使用</p>
+                    </div>
+                    <span class="wzx_row-meta">12:08</span>
+                </div>
+                <div class="wzx_row">
+                    <span class="wzx_row-icon" aria-hidden="true"><i class="iconfont icon-shu"></i></span>
+                    <div class="wzx_row-text">
+                        <p class="wzx_row-title">第 02 讲 · Flex 基础</p>
+                        <p class="wzx_row-note">主轴、交叉轴与对齐</p>
+                    </div>
+                    <span class="wzx_row-meta">21:36</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="wzx_panel" id="wzx_panel_cart" data-wzx-panel="cart" aria-label="购物车内容" hidden>
+            <div class="wzx_panel-head">
+                <div>
+                    <p class="wzx_panel-kicker">CART / 购物车</p>
+                    <h2 class="wzx_panel-title">学习清单</h2>
+                </div>
+                <span class="wzx_panel-tag">待整理</span>
+            </div>
+            <p class="wzx_panel-desc">把待完成的练习放进清单，完成后再逐项移除。</p>
+            <div class="wzx_card">
+                <div class="wzx_row">
+                    <span class="wzx_row-icon" aria-hidden="true"><i class="iconfont icon-gouwuchekong"></i></span>
+                    <div class="wzx_row-text">
+                        <p class="wzx_row-title">图标资源整理</p>
+                        <p class="wzx_row-note">统一字体图标与 SVG 图标用法</p>
+                    </div>
+                    <span class="wzx_row-meta">× 1</span>
+                </div>
+                <div class="wzx_row">
+                    <span class="wzx_row-icon" aria-hidden="true"><i class="iconfont icon-tushu"></i></span>
+                    <div class="wzx_row-text">
+                        <p class="wzx_row-title">响应式断点检查</p>
+                        <p class="wzx_row-note">320 / 375 / 414 / 768</p>
+                    </div>
+                    <span class="wzx_row-meta">× 1</span>
+                </div>
+                <div class="wzx_row">
+                    <span class="wzx_row-icon" aria-hidden="true"><i class="iconfont icon-shu1"></i></span>
+                    <div class="wzx_row-text">
+                        <p class="wzx_row-title">安全区适配</p>
+                        <p class="wzx_row-note">底部导航与刘海屏留白</p>
+                    </div>
+                    <span class="wzx_row-meta">× 1</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="wzx_panel" id="wzx_panel_mine" data-wzx-panel="mine" aria-label="我的内容" hidden>
+            <div class="wzx_panel-head">
+                <div>
+                    <p class="wzx_panel-kicker">MINE / 我的</p>
+                    <h2 class="wzx_panel-title">学习档案</h2>
+                </div>
+                <span class="wzx_panel-tag">2026</span>
+            </div>
+            <p class="wzx_panel-desc">课堂练习的归属信息与完成情况。</p>
+            <div class="wzx_card">
+                <div class="wzx_row">
+                    <span class="wzx_row-icon" aria-hidden="true"><i class="iconfont icon-xiaoren"></i></span>
+                    <div class="wzx_row-text">
+                        <p class="wzx_row-title">王振旭</p>
+                        <p class="wzx_row-note">《高级网页设计》课堂实践</p>
+                    </div>
+                    <span class="wzx_row-meta">学生</span>
+                </div>
+                <div class="wzx_row">
+                    <span class="wzx_row-icon" aria-hidden="true"><i class="iconfont icon-xiaofangzi"></i></span>
+                    <div class="wzx_row-text">
+                        <p class="wzx_row-title">24002120207</p>
+                        <p class="wzx_row-note">学号</p>
+                    </div>
+                    <span class="wzx_row-meta">2026</span>
+                </div>
+                <div class="wzx_row">
+                    <span class="wzx_row-icon" aria-hidden="true"><i class="iconfont icon-tushu"></i></span>
+                    <div class="wzx_row-text">
+                        <p class="wzx_row-title">已完成练习</p>
+                        <p class="wzx_row-note">持续增加中</p>
+                    </div>
+                    <span class="wzx_row-meta">06 项</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <nav class="wzx_nav" aria-label="底部导航">
+        <ul class="wzx_nav-list">
+            <li class="wzx_nav-cell">
+                <button type="button" class="wzx_nav-item wzx_is-active" data-wzx-tab="home" aria-controls="wzx_panel_home" aria-current="page">
+                    <span class="wzx_nav-icon"><i class="iconfont icon-xiaofangzi" aria-hidden="true"></i><span class="wzx_nav-badge" aria-label="3 条未读">3</span></span>
+                    <span class="wzx_nav-label">首页</span>
+                </button>
+            </li>
+            <li class="wzx_nav-cell">
+                <button type="button" class="wzx_nav-item" data-wzx-tab="video" aria-controls="wzx_panel_video">
+                    <span class="wzx_nav-icon"><i class="iconfont icon-shipin" aria-hidden="true"></i><span class="wzx_nav-badge" aria-label="8 条未读">8</span></span>
+                    <span class="wzx_nav-label">视频</span>
+                </button>
+            </li>
+            <li class="wzx_nav-cell">
+                <button type="button" class="wzx_nav-item" data-wzx-tab="cart" aria-controls="wzx_panel_cart">
+                    <span class="wzx_nav-icon"><i class="iconfont icon-gouwuchekong" aria-hidden="true"></i><span class="wzx_nav-badge" aria-label="128 条未读">99+</span><span class="wzx_nav-dot" aria-hidden="true"></span></span>
+                    <span class="wzx_nav-label">购物车</span>
+                </button>
+            </li>
+            <li class="wzx_nav-cell">
+                <button type="button" class="wzx_nav-item" data-wzx-tab="mine" aria-controls="wzx_panel_mine">
+                    <span class="wzx_nav-icon"><i class="iconfont icon-xiaoren" aria-hidden="true"></i><span class="wzx_nav-badge" aria-label="5 条未读">5</span></span>
+                    <span class="wzx_nav-label">我的</span>
+                </button>
+            </li>
+        </ul>
+    </nav>
+
+    <script>
+        (function () {
+            "use strict";
+
+            var wzx_tabs = Array.prototype.slice.call(document.querySelectorAll(".wzx_nav-item"));
+            var wzx_panels = Array.prototype.slice.call(document.querySelectorAll(".wzx_panel"));
+            var wzx_clearDelay = 220;
+
+            function wzx_clearBadge(wzx_tab) {
+                var wzx_badge = wzx_tab.querySelector(".wzx_nav-badge");
+                var wzx_dot = wzx_tab.querySelector(".wzx_nav-dot");
+
+                if (wzx_badge && !wzx_badge.hidden && !wzx_badge.classList.contains("wzx_is-clearing")) {
+                    wzx_badge.removeAttribute("aria-label");
+                    wzx_badge.setAttribute("aria-hidden", "true");
+                    wzx_badge.classList.add("wzx_is-clearing");
+                    window.setTimeout(function () {
+                        wzx_badge.hidden = true;
+                    }, wzx_clearDelay);
+                }
+
+                if (wzx_dot && !wzx_dot.hidden && !wzx_dot.classList.contains("wzx_is-clearing")) {
+                    wzx_dot.classList.add("wzx_is-clearing");
+                    window.setTimeout(function () {
+                        wzx_dot.hidden = true;
+                    }, wzx_clearDelay);
+                }
+            }
+
+            function wzx_activate(wzx_tab) {
+                var wzx_key = wzx_tab.getAttribute("data-wzx-tab");
+
+                wzx_tabs.forEach(function (wzx_item) {
+                    var wzx_active = wzx_item === wzx_tab;
+                    wzx_item.classList.toggle("wzx_is-active", wzx_active);
+                    if (wzx_active) {
+                        wzx_item.setAttribute("aria-current", "page");
+                    } else {
+                        wzx_item.removeAttribute("aria-current");
+                    }
+                });
+
+                wzx_panels.forEach(function (wzx_panel) {
+                    wzx_panel.hidden = wzx_panel.getAttribute("data-wzx-panel") !== wzx_key;
+                });
+
+                wzx_clearBadge(wzx_tab);
+            }
+
+            wzx_tabs.forEach(function (wzx_tab) {
+                wzx_tab.addEventListener("click", function () {
+                    wzx_activate(wzx_tab);
+                });
+            });
+        })();
+    </script>
+</body>
+</html>
