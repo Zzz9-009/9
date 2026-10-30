@@ -267,3 +267,32 @@ T5 通过
 ```
 
 - **处理结果**：T5 人工验收通过，T1–T5 全部完成；进入 Phase 6，旧复盘归档为 `retrospective-ball-game.md`，输出本轮 `retrospective.md` 与 Git 分阶段提交指引。
+
+---
+
+## 记录 20
+
+- **时间**：2026-10-30 00:00:00
+- **模型**：DeepSeek-V4.1-Flash
+- **提示词原文**：
+
+```
+按照图片要求分别对照完成两个任务 分别输出两个文件starter-level1-0207王振旭和 starter-level2-0207王振旭
+```
+
+- **附件**：`starter-level1.html`、`starter-level2.html`、`data.js`、两张任务要求截图
+- **处理结果**：已读取两个起始模板、数据源与任务要求图；等级一需补全 5 项功能，等级二需补全 11 项功能。
+
+---
+
+## 记录 21
+
+- **时间**：2026-10-30
+- **模型**：DeepSeek-V4.1-Flash
+- **提示词原文**：
+
+```
+创建技能skill：提交到github，将本项目提交commit并push到`https://github.com/Zzz9-009/9.git`，使用已设置公钥。
+```
+
+- **处理结果**：创建项目技能 `.trae/skills/commit-and-push-github`；验证 SSH 公钥（22 端口不可用，443 端口认证为 Zzz9-009）；配置 SSH over 443 远端并提交推送。
