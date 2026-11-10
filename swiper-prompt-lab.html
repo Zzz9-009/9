@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<!--
+  作者：王振旭
+  建立时间：2026-11-10
+  使用大模型：DeepSeek-V4.1-Flash
+  功能名称：任务一提示词迭代记录与配置在线验证
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="用两轮提示词让 AI 生成 Swiper 配置，并在页面内验证四项需求">
+    <title>提示词工程师 · Swiper 配置迭代记录</title>
+    <link rel="stylesheet" href="./swiper/swiper-bundle.min.css">
+    <style>
+        :root {
+            --wzx_ink: #1b1f27;
+            --wzx_muted: #6b7280;
+            --wzx_paper: #f6f4ef;
+            --wzx_card: #ffffff;
+            --wzx_line: #e2ded4;
+            --wzx_accent: #1f6feb;
+            --wzx_ok: #1f7a4d;
+            --wzx_warn: #b4441f;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-width: 320px;
+            margin: 0;
+            color: var(--wzx_ink);
+            background: var(--wzx_paper);
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            line-height: 1.7;
+        }
+
+        .wzx_page {
+            width: min(920px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 44px 0 64px;
+        }
+
+        .wzx_back {
+            display: inline-block;
+            margin-bottom: 22px;
+            color: var(--wzx_muted);
+            font-size: 12px;
+            text-decoration: none;
+        }
+
+        .wzx_back:hover { color: var(--wzx_accent); }
+
+        .wzx_head { padding-bottom: 24px; border-bottom: 1px solid var(--wzx_line); }
+
+        .wzx_kicker {
+            margin: 0 0 12px;
+            color: var(--wzx_accent);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.18em;
+        }
+
+        .wzx_title {
+            margin: 0;
+            font-size: clamp(28px, 5vw, 44px);
+            line-height: 1.14;
+            letter-spacing: -0.035em;
+        }
+
+        .wzx_lead {
+            max-width: 620px;
+            margin: 14px 0 0;
+            color: var(--wzx_muted);
+            font-size: 14px;
+        }
+
+        .wzx_req {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin: 24px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .wzx_req li {
+            padding: 12px 14px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 10px;
+            background: var(--wzx_card);
+            font-size: 12px;
+        }
+
+        .wzx_req strong { display: block; margin-bottom: 2px; font-size: 13px; }
+
+        .wzx_round {
+            margin-top: 34px;
+            padding: 24px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 14px;
+            background: var(--wzx_card);
+        }
+
+        .wzx_round-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .wzx_round-head h2 { margin: 0; font-size: 19px; letter-spacing: -0.02em; }
+
+        .wzx_badge {
+            padding: 2px 9px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .wzx_badge--warn { color: var(--wzx_warn); background: #fdece5; }
+        .wzx_badge--ok { color: var(--wzx_ok); background: #e6f5ec; }
+
+        .wzx_label {
+            margin: 16px 0 6px;
+            color: var(--wzx_muted);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+        }
+
+        pre {
+            margin: 0;
+            padding: 16px;
+            overflow-x: auto;
+            border-radius: 10px;
+            background: #11151c;
+            color: #d7dee9;
+            font-size: 12.5px;
+            line-height: 1.75;
+        }
+
+        pre code { font-family: Consolas, "Courier New", monospace; }
+
+        .wzx_quote {
+            margin: 0;
+            padding: 12px 16px;
+            border-left: 3px solid var(--wzx_line);
+            color: #3c4250;
+            background: #faf9f6;
+            font-size: 13px;
+        }
+
+        .wzx_flaws {
+            margin: 10px 0 0;
+            padding-left: 20px;
+            color: #3c4250;
+            font-size: 13px;
+        }
+
+        .wzx_flaws li + li { margin-top: 4px; }
+
+        .wzx_flaws code {
+            padding: 1px 5px;
+            border-radius: 3px;
+            background: #f2efe8;
+            font-size: 12px;
+        }
+
+        .wzx_verify {
+            margin-top: 34px;
+            padding: 24px;
+            border-radius: 14px;
+            background: #11151c;
+            color: #eef1f6;
+        }
+
+        .wzx_verify h2 { margin: 0 0 6px; font-size: 19px; }
+        .wzx_verify p { margin: 0 0 18px; color: #9aa4b4; font-size: 13px; }
+
+        .wzx_swiper {
+            width: 100%;
+            max-width: 560px;
+            margin: 0 auto;
+            padding-bottom: 40px;
+        }
+
+        .wzx_swiper .swiper-slide {
+            overflow: hidden;
+            border-radius: 10px;
+            background: #0a0d12;
+        }
+
+        .wzx_swiper .swiper-slide img {
+            display: block;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+        }
+
+        .wzx_swiper .swiper-pagination-bullet { background: #59647a; opacity: 1; }
+
+        .wzx_swiper .swiper-pagination-bullet-active {
+            width: 20px;
+            border-radius: 99px;
+            background: #f0c775;
+        }
+
+        .wzx_timer {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 6px;
+            color: #9aa4b4;
+            font-size: 12px;
+        }
+
+        .wzx_timer strong { color: #f0c775; font-size: 16px; }
+
+        .wzx_table {
+            width: 100%;
+            margin-top: 16px;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .wzx_table th,
+        .wzx_table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--wzx_line);
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .wzx_table th {
+            color: var(--wzx_muted);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+        }
+
+        .wzx_table td:last-child { color: var(--wzx_ok); font-weight: 700; white-space: nowrap; }
+
+        .wzx_answers { margin-top: 34px; }
+
+        .wzx_answers h2 { margin: 0 0 12px; font-size: 19px; letter-spacing: -0.02em; }
+
+        .wzx_answer + .wzx_answer { margin-top: 12px; }
+
+        .wzx_answer {
+            padding: 16px 18px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 10px;
+            background: var(--wzx_card);
+            font-size: 13px;
+        }
+
+        .wzx_answer h3 { margin: 0 0 6px; font-size: 14px; }
+        .wzx_answer p { margin: 0; color: #3c4250; }
+
+        .wzx_foot {
+            margin-top: 34px;
+            padding-top: 16px;
+            border-top: 1px solid var(--wzx_line);
+            color: var(--wzx_muted);
+            font-size: 12px;
+        }
+
+        @media (max-width: 720px) {
+            .wzx_req { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .wzx_round, .wzx_verify { padding: 18px; }
+            .wzx_table th, .wzx_table td { padding: 8px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+<div class="wzx_page">
+    <a class="wzx_back" href="index.html">← 返回课堂目录</a>
+
+    <header class="wzx_head">
+        <p class="wzx_kicker">TASK 01 / PROMPT ENGINEERING</p>
+        <h1 class="wzx_title">让 AI 生成一份能用的<br>Swiper 配置</h1>
+        <p class="wzx_lead">目标配置只有四项要求，但第一版回答并未全部满足。下面是两轮提示词、两版代码，以及页面内的实时验证。</p>
+        <ul class="wzx_req">
+            <li><strong>① 无缝循环</strong>loop 开启后首尾衔接</li>
+            <li><strong>② 自动翻页</strong>3.2 秒一次，手动后不停</li>
+            <li><strong>③ 圆点可点击</strong>点击分页器跳转</li>
+            <li><strong>④ 初始效果</strong>effect 为 cube</li>
+        </ul>
+    </header>
+
+    <section class="wzx_round">
+        <div class="wzx_round-head">
+            <h2>第 1 轮 · 需求原样交给 AI</h2>
+            <span class="wzx_badge wzx_badge--warn">3 处问题</span>
+        </div>
+        <p class="wzx_label">我的提示词</p>
+        <blockquote class="wzx_quote">用 Swiper 写一个轮播：要无缝循环、3.2 秒自动翻页并且手动操作后不要停、圆点分页器可以点击、初始效果是 cube。</blockquote>
+        <p class="wzx_label">AI 返回的代码</p>
+<pre><code>const mySwiper = new Swiper('#mySwiper', {
+  loop: true,
+  autoplay: 3200,
+  effect: 'cube',
+  pagination: { el: '.swiper-pagination' }
+});</code></pre>
+        <p class="wzx_label">粘进页面后发现的问题</p>
+        <ul class="wzx_flaws">
+            <li><code>autoplay: 3200</code> 是旧版写法，Swiper 11 不再接受数字，结果完全不自动播放。</li>
+            <li>没有写 <code>disableOnInteraction: false</code>，默认值会让用户手动滑动后永久停止自动播放。</li>
+            <li>分页器缺少 <code>clickable: true</code>，圆点只能看不能点。</li>
+        </ul>
+    </section>
+
+    <section class="wzx_round">
+        <div class="wzx_round-head">
+            <h2>第 2 轮 · 把每条要求变成可检查的约束</h2>
+            <span class="wzx_badge wzx_badge--ok">4 项全部满足</span>
+        </div>
+        <p class="wzx_label">我的提示词</p>
+        <blockquote class="wzx_quote">
+            请按 Swiper 11 的对象写法重写，并逐条对应我的要求：<br>
+            1. loop 必须为 true，实现无缝循环；<br>
+            2. autoplay 必须是对象，delay 为 3200，且必须写 disableOnInteraction: false，保证手动滑动或点箭头后仍然继续自动播放；<br>
+            3. pagination 必须是对象，包含 el 与 clickable: true；<br>
+            4. effect 固定为 'cube'。<br>
+            请只输出一段可直接运行的 new Swiper 配置，并在注释里标明每条需求对应哪一行。
+        </blockquote>
+        <p class="wzx_label">AI 返回的代码（已采用）</p>
+<pre><code>const mySwiper = new Swiper('#mySwiper', {
+  loop: true,                                          // ① 无缝循环
+  effect: 'cube',                                      // ④ 初始效果 cube
+  speed: 650,
+  autoplay: {
+    delay: 3200,                                       // ② 3.2 秒自动翻页
+    disableOnInteraction: false                        // ② 手动操作后不停止
+  },
+  pagination: {
+    el: '.swiper-pagination',
+    clickable: true                                    // ③ 圆点可点击
+  }
+});</code></pre>
+    </section>
+
+    <section class="wzx_verify">
+        <h2>页面内实时验证</h2>
+        <p>下面是按最终配置运行的真实实例。观察倒计时会周期性回到 3.2 秒，说明自动播放持续生效；点圆点或拖动后再看倒计时，它仍在走。</p>
+        <div class="swiper wzx_swiper">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide"><img src="./assets/exhibition/01-light-dome.jpg" alt="光之穹顶"></div>
+                <div class="swiper-slide"><img src="./assets/exhibition/02-shadow-forest.jpg" alt="影之森林"></div>
+                <div class="swiper-slide"><img src="./assets/exhibition/03-mirror-corridor.jpg" alt="镜面回廊"></div>
+                <div class="swiper-slide"><img src="./assets/exhibition/04-stardust-falls.jpg" alt="星尘瀑布"></div>
+                <div class="swiper-slide"><img src="./assets/exhibition/05-neon-ripples.jpg" alt="霓虹涟漪"></div>
+            </div>
+            <div class="swiper-pagination"></div>
+        </div>
+        <div class="wzx_timer">
+            <span>距离下次自动翻页：<strong id="wzx_timeLeft">3.2</strong> 秒</span>
+            <span>当前第 <strong id="wzx_slideNow">1</strong> 张 · 共 5 张</span>
+        </div>
+    </section>
+
+    <table class="wzx_table">
+        <thead>
+            <tr><th>需求</th><th>验证方式</th><th>结果</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>① 无缝循环</td><td>从第 5 张继续点下一张，画面回到第 1 张且无空白</td><td>通过</td></tr>
+            <tr><td>② 3.2 秒自动翻页</td><td>不操作时倒计时从 3.2 开始递减并自动切换</td><td>通过</td></tr>
+            <tr><td>② 手动后不停止</td><td>点击圆点或拖动后，倒计时依旧重新开始</td><td>通过</td></tr>
+            <tr><td>③ 圆点可点击</td><td>直接点击任意圆点，跳转到对应图片</td><td>通过</td></tr>
+            <tr><td>④ 初始效果 cube</td><td>切换时画面呈立方体翻转而非平移</td><td>通过</td></tr>
+        </tbody>
+    </table>
+
+    <section class="wzx_answers">
+        <h2>答辩准备</h2>
+        <div class="wzx_answer">
+            <h3>第一版提示词漏掉了什么？</h3>
+            <p>漏掉了"手动操作后不要停"这条的<strong>实现方式</strong>。我写了需求，却没有约束 autoplay 必须用对象写法，AI 就按旧版语法返回了数字，这条需求等于没被满足。</p>
+        </div>
+        <div class="wzx_answer">
+            <h3>第二轮怎么"说清楚"的？</h3>
+            <p>把一句话需求拆成四条可检查的断言，每条都指名具体属性与具体值，并指定 Swiper 版本、要求逐行注释对应关系。约束越具体，AI 越没有自由发挥的空间。</p>
+        </div>
+        <div class="wzx_answer">
+            <h3>AI 第一次的代码错在哪？</h3>
+            <p>三处：<code>autoplay</code> 用了已废弃的数字写法导致完全不播放；缺少 <code>disableOnInteraction: false</code> 导致手动后停止；<code>pagination</code> 缺 <code>clickable: true</code> 导致圆点不可点。</p>
+        </div>
+    </section>
+
+    <footer class="wzx_foot">24002120207 王振旭 · 高级网页设计课堂实践 · Swiper 11 本地资源，页面可直接双击打开</footer>
+</div>
+
+<script src="./swiper/swiper-bundle.min.js"></script>
+<script>
+  // 功能：创建任务一最终配置对应的 Swiper 实例，用于页面内需求验证
+  const wzx_verifySwiper = new Swiper(".wzx_swiper", {
+    loop: true,
+    effect: "cube",
+    speed: 650,
+    autoplay: { delay: 3200, disableOnInteraction: false },
+    pagination: { el: ".wzx_swiper .swiper-pagination", clickable: true },
+    grabCursor: true
+  });
+
+  // 功能：把当前页序号写入页面，使用真实索引避免 loop 克隆带来的偏差
+  function wzx_updateCounter() {
+    const wzx_total = wzx_verifySwiper.slides.length;
+    const wzx_now = (wzx_verifySwiper.realIndex % wzx_total) + 1;
+    document.getElementById("wzx_slideNow").textContent = wzx_now;
+  }
+
+  // 功能：读取 Swiper 自动播放剩余时间并显示，用于证明 3.2 秒间隔持续生效
+  wzx_verifySwiper.on("autoplayTimeLeft", function (wzx_swiper, wzx_timeLeft) {
+    document.getElementById("wzx_timeLeft").textContent = (wzx_timeLeft / 1000).toFixed(1);
+  });
+
+  // 功能：切换图片时刷新序号显示
+  wzx_verifySwiper.on("slideChange", wzx_updateCounter);
+
+  // 功能：页面载入后初始化当前序号
+  wzx_updateCounter();
+</script>
+</body>
+</html>

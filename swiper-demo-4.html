@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<!--
+  作者：王振旭
+  建立时间：2026-11-10
+  使用大模型：DeepSeek-V4.1-Flash
+  功能名称：Swiper 演示四 · 七种切换效果展厅（含 creative 电影墙）
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Swiper 七种切换效果：slide、fade、cube、coverflow、flip、cards 与 creative 电影墙">
+    <title>演示四 · Swiper 效果展厅</title>
+    <link rel="stylesheet" href="./swiper/swiper-bundle.min.css">
+    <style>
+        :root {
+            --wzx_bg: #0b0d12;
+            --wzx_bg-soft: #141821;
+            --wzx_line: #262c38;
+            --wzx_text: #f2f4f8;
+            --wzx_muted: #98a1b2;
+            --wzx_accent: #d8b26a;
+            --wzx_accent-soft: rgba(216, 178, 106, 0.12);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-width: 320px;
+            margin: 0;
+            color: var(--wzx_text);
+            background: var(--wzx_bg);
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            line-height: 1.6;
+        }
+
+        .wzx_page {
+            width: min(1080px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 40px 0 64px;
+        }
+
+        .wzx_head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+            padding-bottom: 22px;
+            border-bottom: 1px solid var(--wzx_line);
+        }
+
+        .wzx_kicker {
+            margin: 0 0 10px;
+            color: var(--wzx_accent);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.2em;
+        }
+
+        .wzx_title {
+            margin: 0;
+            font-size: clamp(30px, 5.4vw, 46px);
+            line-height: 1.1;
+            letter-spacing: -0.035em;
+        }
+
+        .wzx_lead {
+            max-width: 420px;
+            margin: 0;
+            color: var(--wzx_muted);
+            font-size: 13px;
+            text-align: right;
+        }
+
+        .wzx_effects {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 22px 0 20px;
+        }
+
+        .wzx_effect {
+            min-height: 40px;
+            padding: 0 15px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 999px;
+            color: var(--wzx_muted);
+            background: transparent;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
+        }
+
+        .wzx_effect:hover { color: var(--wzx_text); border-color: #3b4456; }
+
+        .wzx_effect:focus-visible {
+            outline: 2px solid var(--wzx_accent);
+            outline-offset: 2px;
+        }
+
+        .wzx_effect--active {
+            color: #15181f;
+            border-color: var(--wzx_accent);
+            background: var(--wzx_accent);
+        }
+
+        .wzx_effect--new::after {
+            margin-left: 6px;
+            padding: 1px 5px;
+            border-radius: 3px;
+            color: var(--wzx_accent);
+            background: var(--wzx_accent-soft);
+            font-size: 10px;
+            content: "NEW";
+        }
+
+        .wzx_effect--active.wzx_effect--new::after {
+            color: #15181f;
+            background: rgba(21, 24, 31, 0.16);
+        }
+
+        .wzx_stage {
+            padding: 18px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 18px;
+            background: var(--wzx_bg-soft);
+        }
+
+        .wzx_swiper {
+            width: 100%;
+            padding-bottom: 40px;
+            overflow: hidden;
+        }
+
+        .wzx_swiper .swiper-slide {
+            border-radius: 12px;
+            overflow: hidden;
+            background: #10141c;
+        }
+
+        .wzx_swiper .swiper-slide img {
+            display: block;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+        }
+
+        .wzx_caption {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            padding: 34px 18px 14px;
+            background: linear-gradient(to top, rgba(6, 8, 12, 0.92), rgba(6, 8, 12, 0));
+        }
+
+        .wzx_caption h3 {
+            margin: 0;
+            font-size: 16px;
+            letter-spacing: -0.01em;
+        }
+
+        .wzx_caption p {
+            margin: 2px 0 0;
+            color: var(--wzx_muted);
+            font-size: 12px;
+        }
+
+        .wzx_swiper .swiper-pagination-bullet {
+            width: 8px;
+            height: 8px;
+            background: #4a5364;
+            opacity: 1;
+        }
+
+        .wzx_swiper .swiper-pagination-bullet-active {
+            width: 22px;
+            border-radius: 99px;
+            background: var(--wzx_accent);
+        }
+
+        .wzx_swiper .swiper-button-prev,
+        .wzx_swiper .swiper-button-next {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            color: #15181f;
+            background: rgba(242, 244, 248, 0.88);
+        }
+
+        .wzx_swiper .swiper-button-prev::after,
+        .wzx_swiper .swiper-button-next::after { font-size: 14px; font-weight: 700; }
+
+        .wzx_meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin: 14px 0 0;
+            color: var(--wzx_muted);
+            font-size: 12px;
+        }
+
+        .wzx_meta code {
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #1d2330;
+            color: #cfd6e3;
+            font-size: 11px;
+        }
+
+        .wzx_note {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 26px;
+        }
+
+        .wzx_card {
+            padding: 20px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 14px;
+            background: #11151d;
+        }
+
+        .wzx_card h3 {
+            margin: 0 0 10px;
+            color: var(--wzx_accent);
+            font-size: 13px;
+            letter-spacing: 0.06em;
+        }
+
+        .wzx_card p { margin: 0; color: var(--wzx_muted); font-size: 13px; }
+        .wzx_card p + p { margin-top: 8px; }
+        .wzx_card strong { color: var(--wzx_text); }
+
+        .wzx_foot {
+            margin-top: 30px;
+            padding-top: 16px;
+            border-top: 1px solid var(--wzx_line);
+            color: #6d7789;
+            font-size: 12px;
+        }
+
+        @media (max-width: 720px) {
+            .wzx_head { align-items: flex-start; flex-direction: column; gap: 8px; }
+            .wzx_lead { text-align: left; }
+            .wzx_stage { padding: 12px; border-radius: 14px; }
+            .wzx_note { grid-template-columns: 1fr; }
+            .wzx_effect { padding: 0 12px; font-size: 12px; }
+            .wzx_caption h3 { font-size: 14px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .wzx_effect { transition: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="wzx_page">
+    <header class="wzx_head">
+        <div>
+            <p class="wzx_kicker">SWIPER / DEMO 04</p>
+            <h1 class="wzx_title">七种切换效果</h1>
+        </div>
+        <p class="wzx_lead">课堂上讲了 6 种效果，第 7 种 creative 为本次自学新增。点击按钮即可切换，圆点分页器可点击，3.2 秒自动翻页且手动操作后不停止。</p>
+    </header>
+
+    <div class="wzx_effects" role="group" aria-label="切换效果">
+        <button class="wzx_effect wzx_effect--active" type="button" data-wzx-effect="slide" aria-pressed="true">slide 滑动</button>
+        <button class="wzx_effect" type="button" data-wzx-effect="fade" aria-pressed="false">fade 淡入</button>
+        <button class="wzx_effect" type="button" data-wzx-effect="cube" aria-pressed="false">cube 立方体</button>
+        <button class="wzx_effect" type="button" data-wzx-effect="coverflow" aria-pressed="false">coverflow 封面流</button>
+        <button class="wzx_effect" type="button" data-wzx-effect="flip" aria-pressed="false">flip 翻转</button>
+        <button class="wzx_effect" type="button" data-wzx-effect="cards" aria-pressed="false">cards 卡片</button>
+        <button class="wzx_effect wzx_effect--new" type="button" data-wzx-effect="creative" aria-pressed="false">creative 电影墙</button>
+    </div>
+
+    <div class="wzx_stage">
+        <div class="swiper wzx_swiper">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide">
+                    <img src="./assets/exhibition/01-light-dome.jpg" alt="光之穹顶：展厅穹顶投射的光束">
+                    <div class="wzx_caption"><h3>光之穹顶</h3><p>光与影艺术展 · 01</p></div>
+                </div>
+                <div class="swiper-slide">
+                    <img src="./assets/exhibition/02-shadow-forest.jpg" alt="影之森林：雾气中的发光光柱">
+                    <div class="wzx_caption"><h3>影之森林</h3><p>光与影艺术展 · 02</p></div>
+                </div>
+                <div class="swiper-slide">
+                    <img src="./assets/exhibition/03-mirror-corridor.jpg" alt="镜面回廊：无限延伸的对称光带">
+                    <div class="wzx_caption"><h3>镜面回廊</h3><p>光与影艺术展 · 03</p></div>
+                </div>
+                <div class="swiper-slide">
+                    <img src="./assets/exhibition/04-stardust-falls.jpg" alt="星尘瀑布：粒子光瀑">
+                    <div class="wzx_caption"><h3>星尘瀑布</h3><p>光与影艺术展 · 04</p></div>
+                </div>
+                <div class="swiper-slide">
+                    <img src="./assets/exhibition/05-neon-ripples.jpg" alt="霓虹涟漪：水面上的发光同心圆">
+                    <div class="wzx_caption"><h3>霓虹涟漪</h3><p>光与影艺术展 · 05</p></div>
+                </div>
+                <div class="swiper-slide">
+                    <img src="./assets/exhibition/06-adora-magic-city.jpg" alt="爱达·魔都号邮轮在落日海面上航行">
+                    <div class="wzx_caption"><h3>爱达·魔都号</h3><p>首艘国产大型邮轮 · 2024 年 1 月首航</p></div>
+                </div>
+            </div>
+            <div class="swiper-pagination"></div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
+        </div>
+        <p class="wzx_meta">
+            <span>当前效果：<code id="wzx_effectName">slide</code></span>
+            <span>自动翻页间隔 3.2 秒 · 手动操作后继续自动播放</span>
+        </p>
+    </div>
+
+    <div class="wzx_note">
+        <section class="wzx_card">
+            <h3>任务一 · 提示词验证</h3>
+            <p>本页实例使用最终配置：<strong>loop、autoplay 3.2 秒且 disableOnInteraction 为 false、分页器 clickable、effect 可切换</strong>。</p>
+            <p>四项要求均可在本页直接验证，完整提示词迭代记录见 <a href="./swiper-prompt-lab.html" style="color:#d8b26a">提示词记录页</a>。</p>
+        </section>
+        <section class="wzx_card">
+            <h3>任务二 · creative 参数含义</h3>
+            <p><strong>prev</strong> 控制"上一张"停留时的位置：向左平移、缩小并带负角度，形成退到侧后方的观感。</p>
+            <p><strong>next</strong> 控制"下一张"待入场时的位置：向右平移并放大，从画面右侧外进入。</p>
+            <p>transform 中的百分号相对<strong>滑块自身</strong>的宽或高计算；把 <code>rotate</code> 的 Z 轴改为 <code>20</code> 即旋转 20 度。</p>
+        </section>
+    </div>
+
+    <footer class="wzx_foot">24002120207 王振旭 · 高级网页设计课堂实践 · Swiper 11 本地资源</footer>
+</div>
+
+<script src="./swiper/swiper-bundle.min.js"></script>
+<script>
+  // 功能：保存当前 Swiper 实例，便于切换效果时销毁重建
+  let wzx_swiperInstance = null;
+  // 功能：记录当前选中的切换效果名称
+  let wzx_currentEffect = "slide";
+
+  // 功能：按效果名称返回对应的 Swiper 效果配置
+  function wzx_getEffectConfig(wzx_effect) {
+    if (wzx_effect === "fade") {
+      return { effect: "fade", fadeEffect: { crossFade: true } };
+    }
+    if (wzx_effect === "cube") {
+      return { effect: "cube", cubeEffect: { shadow: true, slideShadows: true, shadowOffset: 20, shadowScale: 0.94 } };
+    }
+    if (wzx_effect === "coverflow") {
+      return { effect: "coverflow", coverflowEffect: { rotate: 30, stretch: 0, depth: 120, modifier: 1, slideShadows: true } };
+    }
+    if (wzx_effect === "flip") {
+      return { effect: "flip", flipEffect: { slideShadows: true, limitRotation: true } };
+    }
+    if (wzx_effect === "cards") {
+      return { effect: "cards", cardsEffect: { perSlideOffset: 8, perSlideRotate: 2, slideShadows: true } };
+    }
+    if (wzx_effect === "creative") {
+      return {
+        effect: "creative",
+        creativeEffect: {
+          limitProgress: 3,
+          prev: { translate: ["-58%", 0, -220], scale: 0.72, rotate: [0, 0, -12], opacity: 0.55, shadow: true },
+          next: { translate: ["102%", 0, 0], scale: 1.08 }
+        }
+      };
+    }
+    return { effect: "slide" };
+  }
+
+  // 功能：重建 Swiper 实例并应用指定效果，同时保留自动播放与可点击分页
+  function wzx_applyEffect(wzx_effect) {
+    if (wzx_swiperInstance) {
+      wzx_swiperInstance.destroy(true, true);
+    }
+
+    const wzx_config = Object.assign({
+      loop: true,
+      speed: 650,
+      autoplay: { delay: 3200, disableOnInteraction: false },
+      pagination: { el: ".wzx_swiper .swiper-pagination", clickable: true },
+      navigation: { nextEl: ".wzx_swiper .swiper-button-next", prevEl: ".wzx_swiper .swiper-button-prev" },
+      grabCursor: true
+    }, wzx_getEffectConfig(wzx_effect));
+
+    wzx_swiperInstance = new Swiper(".wzx_swiper", wzx_config);
+  }
+
+  // 功能：更新效果按钮的选中状态，并同步无障碍属性
+  function wzx_syncButtons(wzx_effect) {
+    document.querySelectorAll("[data-wzx-effect]").forEach(function (wzx_button) {
+      const wzx_isActive = wzx_button.getAttribute("data-wzx-effect") === wzx_effect;
+      wzx_button.classList.toggle("wzx_effect--active", wzx_isActive);
+      wzx_button.setAttribute("aria-pressed", wzx_isActive ? "true" : "false");
+    });
+    document.getElementById("wzx_effectName").textContent = wzx_effect;
+  }
+
+  // 功能：为所有效果按钮绑定点击事件，切换效果并重建实例
+  function wzx_bindEffectButtons() {
+    document.querySelectorAll("[data-wzx-effect]").forEach(function (wzx_button) {
+      wzx_button.addEventListener("click", function () {
+        wzx_currentEffect = wzx_button.getAttribute("data-wzx-effect");
+        wzx_syncButtons(wzx_currentEffect);
+        wzx_applyEffect(wzx_currentEffect);
+      });
+    });
+  }
+
+  // 功能：初始化页面，渲染默认效果并绑定按钮
+  function wzx_init() {
+    wzx_applyEffect(wzx_currentEffect);
+    wzx_bindEffectButtons();
+  }
+
+  wzx_init();
+</script>
+</body>
+</html>

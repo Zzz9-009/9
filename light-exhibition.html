@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<!--
+  作者：王振旭
+  建立时间：2026-11-10
+  使用大模型：DeepSeek-V4.1-Flash
+  功能名称：光影展六件展品轮播（含爱达·魔都号与键盘控制）
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="光与影艺术展：六件展品轮播，支持键盘方向键切换">
+    <title>光影展 · 六件展品</title>
+    <link rel="stylesheet" href="./swiper/swiper-bundle.min.css">
+    <style>
+        :root {
+            --wzx_bg: #07080b;
+            --wzx_text: #f4f1ea;
+            --wzx_muted: #a6a29a;
+            --wzx_gold: #c9a86a;
+            --wzx_line: rgba(244, 241, 234, 0.16);
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body { height: 100%; }
+
+        body {
+            min-width: 320px;
+            margin: 0;
+            color: var(--wzx_text);
+            background: var(--wzx_bg);
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        .wzx_gallery {
+            position: relative;
+            height: 100vh;
+            height: 100dvh;
+        }
+
+        .wzx_swiper {
+            width: 100%;
+            height: 100%;
+        }
+
+        .wzx_swiper .swiper-slide {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wzx_swiper .swiper-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scale(1.04);
+            transition: transform 3200ms ease;
+        }
+
+        .wzx_swiper .swiper-slide-active img { transform: scale(1); }
+
+        .wzx_slide-mask {
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(to right, rgba(5, 6, 9, 0.9) 0%, rgba(5, 6, 9, 0.45) 46%, rgba(5, 6, 9, 0.15) 100%),
+                linear-gradient(to top, rgba(5, 6, 9, 0.85), rgba(5, 6, 9, 0) 55%);
+        }
+
+        .wzx_slide-body {
+            position: absolute;
+            bottom: clamp(96px, 15vh, 150px);
+            left: clamp(20px, 6vw, 96px);
+            width: min(520px, calc(100% - 40px));
+        }
+
+        .wzx_slide-index {
+            margin: 0 0 14px;
+            color: var(--wzx_gold);
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 13px;
+            letter-spacing: 0.28em;
+        }
+
+        .wzx_slide-title {
+            margin: 0;
+            font-size: clamp(30px, 5.6vw, 58px);
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+        }
+
+        .wzx_slide-sub {
+            margin: 12px 0 0;
+            color: var(--wzx_gold);
+            font-size: 13px;
+            letter-spacing: 0.1em;
+        }
+
+        .wzx_slide-desc {
+            max-width: 460px;
+            margin: 16px 0 0;
+            color: rgba(244, 241, 234, 0.78);
+            font-size: 14px;
+        }
+
+        .wzx_slide-facts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 22px;
+            margin: 20px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .wzx_slide-facts li {
+            position: relative;
+            padding-left: 14px;
+            color: rgba(244, 241, 234, 0.72);
+            font-size: 12px;
+        }
+
+        .wzx_slide-facts li::before {
+            position: absolute;
+            top: 0.72em;
+            left: 0;
+            width: 5px;
+            height: 1px;
+            background: var(--wzx_gold);
+            content: "";
+        }
+
+        .wzx_ai-tag {
+            display: inline-block;
+            margin-top: 16px;
+            padding: 2px 8px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 3px;
+            color: var(--wzx_muted);
+            font-size: 11px;
+            letter-spacing: 0.05em;
+        }
+
+        .wzx_topbar {
+            position: absolute;
+            z-index: 10;
+            top: 0;
+            right: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 22px clamp(20px, 6vw, 96px);
+        }
+
+        .wzx_brand {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 10px;
+            color: inherit;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.16em;
+            text-decoration: none;
+        }
+
+        .wzx_brand span {
+            color: var(--wzx_muted);
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.2em;
+        }
+
+        .wzx_expo-note {
+            margin: 0;
+            color: var(--wzx_muted);
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-align: right;
+        }
+
+        .wzx_bottombar {
+            position: absolute;
+            z-index: 10;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 20px clamp(20px, 6vw, 96px);
+            border-top: 1px solid var(--wzx_line);
+            background: linear-gradient(to top, rgba(5, 6, 9, 0.82), rgba(5, 6, 9, 0));
+        }
+
+        .wzx_counter {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            font-family: Georgia, "Times New Roman", serif;
+        }
+
+        .wzx_counter strong { font-size: 22px; font-weight: 400; }
+        .wzx_counter span { color: var(--wzx_muted); font-size: 12px; }
+
+        .wzx_progress {
+            flex: 1 1 auto;
+            height: 1px;
+            max-width: 320px;
+            background: rgba(244, 241, 234, 0.18);
+        }
+
+        .wzx_progress-bar {
+            width: 0;
+            height: 100%;
+            background: var(--wzx_gold);
+            transition: width 520ms ease;
+        }
+
+        .wzx_controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .wzx_key-hint {
+            margin: 0 8px 0 0;
+            color: var(--wzx_muted);
+            font-size: 11px;
+            letter-spacing: 0.04em;
+        }
+
+        .wzx_key-hint kbd {
+            display: inline-block;
+            min-width: 20px;
+            margin: 0 2px;
+            padding: 1px 5px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 3px;
+            color: var(--wzx_text);
+            font-family: inherit;
+            font-size: 10px;
+            text-align: center;
+        }
+
+        .wzx_arrow {
+            display: grid;
+            width: 42px;
+            height: 42px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 50%;
+            place-items: center;
+            color: var(--wzx_text);
+            background: rgba(244, 241, 234, 0.04);
+            font-size: 15px;
+            cursor: pointer;
+            transition: background-color 160ms ease, border-color 160ms ease;
+        }
+
+        .wzx_arrow:hover { border-color: var(--wzx_gold); background: rgba(201, 168, 106, 0.14); }
+
+        .wzx_arrow:focus-visible {
+            outline: 2px solid var(--wzx_gold);
+            outline-offset: 2px;
+        }
+
+        .wzx_back {
+            display: inline-block;
+            margin-top: 10px;
+            color: var(--wzx_muted);
+            font-size: 12px;
+            text-decoration: none;
+        }
+
+        .wzx_back:hover { color: var(--wzx_gold); }
+
+        @media (max-width: 720px) {
+            .wzx_slide-body { bottom: clamp(120px, 22vh, 170px); }
+            .wzx_slide-desc { font-size: 13px; }
+            .wzx_key-hint { display: none; }
+            .wzx_topbar { padding-top: 16px; }
+            .wzx_expo-note { font-size: 10px; }
+            .wzx_progress { display: none; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .wzx_swiper .swiper-slide img { transition: none; transform: none; }
+            .wzx_progress-bar { transition: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="wzx_gallery">
+    <header class="wzx_topbar">
+        <a class="wzx_brand" href="index.html">光影展 <span>LIGHT &amp; SHADOW</span></a>
+        <p class="wzx_expo-note">六件展品 · 常设展<br>键盘 ← → 可切换展品</p>
+    </header>
+
+    <div class="swiper wzx_swiper">
+        <div class="swiper-wrapper">
+            <div class="swiper-slide">
+                <img src="./assets/exhibition/01-light-dome.jpg" alt="光之穹顶：穹顶投射下的光束穿过雾气">
+                <div class="wzx_slide-mask"></div>
+                <div class="wzx_slide-body">
+                    <p class="wzx_slide-index">EXHIBIT 01</p>
+                    <h2 class="wzx_slide-title">光之穹顶</h2>
+                    <p class="wzx_slide-sub">穹顶光束 · 沉浸装置</p>
+                    <p class="wzx_slide-desc">十二道天光穿过展厅穹顶，雾气让光束显形。观众站在光下，影子被拉成第二个展品。</p>
+                    <ul class="wzx_slide-facts">
+                        <li>影像与雾机联动</li>
+                        <li>循环周期 4 分钟</li>
+                        <li>建议观展 6 分钟</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="swiper-slide">
+                <img src="./assets/exhibition/02-shadow-forest.jpg" alt="影之森林：雾气中的发光光柱">
+                <div class="wzx_slide-mask"></div>
+                <div class="wzx_slide-body">
+                    <p class="wzx_slide-index">EXHIBIT 02</p>
+                    <h2 class="wzx_slide-title">影之森林</h2>
+                    <p class="wzx_slide-sub">光柱阵列 · 空间装置</p>
+                    <p class="wzx_slide-desc">八十根亚克力光柱从地面升起，雾气在柱间流动。观众穿行时，光柱亮度随脚步缓慢起伏。</p>
+                    <ul class="wzx_slide-facts">
+                        <li>光柱 80 根</li>
+                        <li>地面雾效</li>
+                        <li>可穿行空间</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="swiper-slide">
+                <img src="./assets/exhibition/03-mirror-corridor.jpg" alt="镜面回廊：无限延伸的对称光带">
+                <div class="wzx_slide-mask"></div>
+                <div class="wzx_slide-body">
+                    <p class="wzx_slide-index">EXHIBIT 03</p>
+                    <h2 class="wzx_slide-title">镜面回廊</h2>
+                    <p class="wzx_slide-sub">无限反射 · 镜面空间</p>
+                    <p class="wzx_slide-desc">两侧镜面与顶部灯带构成无限延伸的回廊。观众每走一步，回廊的尽头就被推远一格。</p>
+                    <ul class="wzx_slide-facts">
+                        <li>双向镜面</li>
+                        <li>长度 24 米</li>
+                        <li>顶部灯带 96 段</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="swiper-slide">
+                <img src="./assets/exhibition/04-stardust-falls.jpg" alt="星尘瀑布：黑暗空间中落下的发光粒子">
+                <div class="wzx_slide-mask"></div>
+                <div class="wzx_slide-body">
+                    <p class="wzx_slide-index">EXHIBIT 04</p>
+                    <h2 class="wzx_slide-title">星尘瀑布</h2>
+                    <p class="wzx_slide-sub">粒子光瀑 · 动态影像</p>
+                    <p class="wzx_slide-desc">十万颗粒子在竖直空间里下落、碰撞、消散。每一次循环的星尘轨迹都不会重复。</p>
+                    <ul class="wzx_slide-facts">
+                        <li>粒子 100000 颗</li>
+                        <li>实时演算</li>
+                        <li>无重复循环</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="swiper-slide">
+                <img src="./assets/exhibition/05-neon-ripples.jpg" alt="霓虹涟漪：水面上扩散的发光同心圆">
+                <div class="wzx_slide-mask"></div>
+                <div class="wzx_slide-body">
+                    <p class="wzx_slide-index">EXHIBIT 05</p>
+                    <h2 class="wzx_slide-title">霓虹涟漪</h2>
+                    <p class="wzx_slide-sub">水面投影 · 互动装置</p>
+                    <p class="wzx_slide-desc">浅水面上漂浮着发光同心圆，观众的呼吸被传感器读取，涟漪随呼吸频率扩散。</p>
+                    <ul class="wzx_slide-facts">
+                        <li>水深 3 厘米</li>
+                        <li>呼吸感应</li>
+                        <li>双色光源</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="swiper-slide">
+                <img src="./assets/exhibition/06-adora-magic-city.jpg" alt="爱达·魔都号邮轮在落日海面上航行">
+                <div class="wzx_slide-mask"></div>
+                <div class="wzx_slide-body">
+                    <p class="wzx_slide-index">EXHIBIT 06</p>
+                    <h2 class="wzx_slide-title">爱达·魔都号</h2>
+                    <p class="wzx_slide-sub">首艘国产大型邮轮 · 2024 年 1 月首航</p>
+                    <p class="wzx_slide-desc">以落日海面为幕，把一艘船变成一件关于远行的光影作品。船体灯带与海面反光构成整件展品的全部光源。</p>
+                    <ul class="wzx_slide-facts">
+                        <li>首艘国产大型邮轮</li>
+                        <li>2024 年 1 月首航</li>
+                        <li>横版 16:9 影像</li>
+                    </ul>
+                    <span class="wzx_ai-tag">展品图片：AI 生成</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="wzx_bottombar">
+        <div class="wzx_counter">
+            <strong id="wzx_currentIndex">01</strong>
+            <span id="wzx_totalIndex">/ 06</span>
+        </div>
+        <div class="wzx_progress"><div class="wzx_progress-bar" id="wzx_progressBar"></div></div>
+        <div class="wzx_controls">
+            <p class="wzx_key-hint">按 <kbd>←</kbd><kbd>→</kbd> 切换</p>
+            <button class="wzx_arrow" type="button" id="wzx_prev" aria-label="上一件展品">←</button>
+            <button class="wzx_arrow" type="button" id="wzx_next" aria-label="下一件展品">→</button>
+        </div>
+    </footer>
+</div>
+
+<script src="./swiper/swiper-bundle.min.js"></script>
+<script>
+  // 功能：保存当前 Swiper 实例，供按钮与键盘共用
+  const wzx_gallerySwiper = new Swiper(".wzx_swiper", {
+    effect: "fade",
+    fadeEffect: { crossFade: true },
+    speed: 700,
+    loop: true,
+    keyboard: { enabled: true, onlyInViewport: false }
+  });
+
+  // 功能：点击上一件按钮时切换到上一件展品
+  document.getElementById("wzx_prev").addEventListener("click", function () {
+    wzx_gallerySwiper.slidePrev();
+  });
+
+  // 功能：点击下一件按钮时切换到下一件展品
+  document.getElementById("wzx_next").addEventListener("click", function () {
+    wzx_gallerySwiper.slideNext();
+  });
+
+  // 功能：把两位序号格式化为 01 到 06 的形式
+  function wzx_formatIndex(wzx_value) {
+    return String(wzx_value).padStart(2, "0");
+  }
+
+  // 功能：同步底部序号与进度条，确保与当前展品一致
+  function wzx_syncIndicator() {
+    const wzx_total = wzx_gallerySwiper.slides.length;
+    const wzx_current = (wzx_gallerySwiper.realIndex % wzx_total) + 1;
+    document.getElementById("wzx_currentIndex").textContent = wzx_formatIndex(wzx_current);
+    document.getElementById("wzx_totalIndex").textContent = "/ " + wzx_formatIndex(wzx_total);
+    document.getElementById("wzx_progressBar").style.width = (wzx_current / wzx_total * 100) + "%";
+  }
+
+  // 功能：监听展品切换事件并刷新序号与进度
+  wzx_gallerySwiper.on("slideChange", wzx_syncIndicator);
+
+  // 功能：页面载入后初始化序号与进度显示
+  wzx_syncIndicator();
+</script>
+</body>
+</html>

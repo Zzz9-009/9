@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<!--
+  作者：王振旭
+  建立时间：2026-11-04
+  使用大模型：DeepSeek-V4.1-Flash
+  功能名称：新闻分类 Tab 选项卡切换
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="使用可复用 JavaScript 实现的新闻分类 Tab 选项卡">
+    <title>新闻分类 Tab 选项卡</title>
+    <style>
+        :root {
+            --wzx_ink: #18202f;
+            --wzx_muted: #687284;
+            --wzx_paper: #f3f5f8;
+            --wzx_card: #ffffff;
+            --wzx_line: #dfe4ec;
+            --wzx_red: #c0392b;
+            --wzx_red-soft: #fbecea;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-width: 320px;
+            margin: 0;
+            color: var(--wzx_ink);
+            background:
+                radial-gradient(circle at 8% 0%, #e8edf5 0, rgba(232, 237, 245, 0) 34%),
+                var(--wzx_paper);
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            line-height: 1.6;
+        }
+
+        .wzx_page {
+            width: min(760px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 42px 0 56px;
+        }
+
+        .wzx_header { margin-bottom: 28px; }
+
+        .wzx_kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            margin: 0 0 14px;
+            color: var(--wzx_red);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.16em;
+        }
+
+        .wzx_kicker::before {
+            width: 22px;
+            height: 2px;
+            background: var(--wzx_red);
+            content: "";
+        }
+
+        .wzx_title {
+            margin: 0;
+            font-size: clamp(36px, 7vw, 54px);
+            line-height: 1.08;
+            letter-spacing: -0.04em;
+        }
+
+        .wzx_summary {
+            max-width: 520px;
+            margin: 14px 0 0;
+            color: var(--wzx_muted);
+            font-size: 14px;
+        }
+
+        .wzx_tablist {
+            display: flex;
+            gap: 4px;
+            padding: 5px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 14px;
+            background: #e8ecf3;
+        }
+
+        .wzx_tab {
+            flex: 1 1 0;
+            min-width: 0;
+            min-height: 44px;
+            padding: 0 8px;
+            border: 0;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--wzx_muted);
+            font: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .wzx_tab:hover {
+            color: var(--wzx_ink);
+            background: rgba(255, 255, 255, 0.62);
+        }
+
+        .wzx_tab:focus-visible {
+            outline: 2px solid var(--wzx_red);
+            outline-offset: 2px;
+        }
+
+        .wzx_tab--active,
+        .wzx_tab--active:hover {
+            color: #ffffff;
+            background: var(--wzx_ink);
+            box-shadow: 0 5px 14px rgba(24, 32, 47, 0.18);
+        }
+
+        .wzx_panel {
+            margin-top: 16px;
+            padding: 28px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 16px;
+            background: var(--wzx_card);
+            box-shadow: 0 18px 40px rgba(24, 32, 47, 0.07);
+            animation: wzx_panel-in 260ms ease both;
+        }
+
+        .wzx_panel[hidden] { display: none; }
+
+        .wzx_panel-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid #edf0f5;
+        }
+
+        .wzx_panel-kicker {
+            margin: 0 0 4px;
+            color: var(--wzx_red);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.18em;
+        }
+
+        .wzx_panel-title {
+            margin: 0;
+            font-size: 23px;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        .wzx_panel-update {
+            flex: none;
+            color: var(--wzx_muted);
+            font-size: 12px;
+        }
+
+        .wzx_story {
+            display: grid;
+            grid-template-columns: 34px minmax(0, 1fr);
+            gap: 12px;
+            padding: 18px 0;
+        }
+
+        .wzx_story + .wzx_story { border-top: 1px solid #edf0f5; }
+
+        .wzx_story-num {
+            padding-top: 2px;
+            color: var(--wzx_red);
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .wzx_story-title {
+            margin: 0;
+            font-size: 17px;
+            line-height: 1.55;
+            letter-spacing: -0.01em;
+        }
+
+        .wzx_story-meta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 8px 0 0;
+            color: var(--wzx_muted);
+            font-size: 12px;
+        }
+
+        .wzx_story-tag {
+            padding: 1px 7px;
+            border-radius: 4px;
+            color: var(--wzx_red);
+            background: var(--wzx_red-soft);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .wzx_footer {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 30px;
+            padding-top: 18px;
+            border-top: 1px solid var(--wzx_line);
+            color: var(--wzx_muted);
+            font-size: 12px;
+        }
+
+        .wzx_footer p { margin: 0; }
+
+        @keyframes wzx_panel-in {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 480px) {
+            .wzx_page { width: calc(100% - 28px); padding-top: 28px; }
+            .wzx_tablist { flex-wrap: wrap; }
+            .wzx_tab { flex: 1 1 calc(50% - 4px); min-height: 42px; font-size: 13px; }
+            .wzx_panel { padding: 20px; }
+            .wzx_panel-head { align-items: flex-start; flex-direction: column; gap: 6px; }
+            .wzx_story { grid-template-columns: 28px minmax(0, 1fr); gap: 8px; }
+            .wzx_story-title { font-size: 15px; }
+            .wzx_footer { flex-direction: column; gap: 4px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .wzx_tab { transition: none; }
+            .wzx_panel { animation: none; }
+        }
+    </style>
+</head>
+<body>
+<!-- 王振旭 · 2026-11-04 · 新闻分类 Tab 选项卡 -->
+<div class="wzx_page">
+    <header class="wzx_header">
+        <p class="wzx_kicker">NEWS READER / TAB COMPONENT</p>
+        <h1 class="wzx_title">今日新闻</h1>
+        <p class="wzx_summary">按分类浏览国内、省内、国际与最热新闻。四个选项卡共用同一套可复用 JavaScript 逻辑。</p>
+    </header>
+
+    <main class="wzx_tabs" data-wzx-tabs>
+        <div class="wzx_tablist" role="tablist" aria-label="新闻分类">
+            <button class="wzx_tab wzx_tab--active" id="wzx_tab-domestic" type="button" role="tab"
+                    aria-selected="true" aria-controls="wzx_panel-domestic"
+                    data-wzx-tab="wzx_panel-domestic">国内新闻</button>
+            <button class="wzx_tab" id="wzx_tab-provincial" type="button" role="tab"
+                    aria-selected="false" aria-controls="wzx_panel-provincial"
+                    data-wzx-tab="wzx_panel-provincial">省内新闻</button>
+            <button class="wzx_tab" id="wzx_tab-international" type="button" role="tab"
+                    aria-selected="false" aria-controls="wzx_panel-international"
+                    data-wzx-tab="wzx_panel-international">国际新闻</button>
+            <button class="wzx_tab" id="wzx_tab-hottest" type="button" role="tab"
+                    aria-selected="false" aria-controls="wzx_panel-hottest"
+                    data-wzx-tab="wzx_panel-hottest">最热新闻</button>
+        </div>
+
+        <section class="wzx_panel wzx_panel--active" id="wzx_panel-domestic" role="tabpanel"
+                 aria-labelledby="wzx_tab-domestic" data-wzx-panel="wzx_panel-domestic">
+            <div class="wzx_panel-head">
+                <div>
+                    <p class="wzx_panel-kicker">DOMESTIC</p>
+                    <h2 class="wzx_panel-title">国内新闻</h2>
+                </div>
+                <span class="wzx_panel-update">今日更新 · 12 条</span>
+            </div>
+            <article class="wzx_story">
+                <span class="wzx_story-num">01</span>
+                <div>
+                    <h3 class="wzx_story-title">全国城市更新行动提速，老旧小区改造进入集中施工期</h3>
+                    <p class="wzx_story-meta"><span class="wzx_story-tag">要闻</span>新华社 · 18 分钟前</p>
+                </div>
+            </article>
+            <article class="wzx_story">
+                <span class="wzx_story-num">02</span>
+                <div>
+                    <h3 class="wzx_story-title">多部门联合发布新一批便民服务清单，涉及医保与出行</h3>
+                    <p class="wzx_story-meta"><span class="wzx_story-tag">民生</span>人民日报 · 42 分钟前</p>
+                </div>
+            </article>
+            <article class="wzx_story">
+                <span class="wzx_story-num">03</span>
+                <div>
+                    <h3 class="wzx_story-title">秋粮收购进度过半，主产区仓储能力持续提升</h3>
+                    <p class="wzx_story-meta"><span class="wzx_story-tag">经济</span>央视新闻 · 1 小时前</p>
+                </div>
+            </article>
+            <article class="wzx_story">
+                <span class="wzx_story-num">04</span>
+                <div>
+                    <h3 class="wzx_story-title">多地中小学启动课后服务新方案，增设科学实践课程</h3>
+                    <p class="wzx_story-meta"><span class="wzx_story-tag">教育</span>中国教育报 · 2 小时前</p>
+                </div>
+            </article>
+        </section>
+
+        <section class="wzx_panel" id="wzx_panel-provincial" role="tabpanel"
+                 aria-labelledby="wzx_tab-provincial" data-wzx-panel="wzx_panel-provincial" hidden>
+            <div class="wzx_panel-head">
+                <div>
+                    <p class="wzx_panel-kicker">PROVINCIAL</p>
+                    <h2 class="wzx_panel-title">省内新闻</h2>
+                </div>
+                <span class="wzx_panel-update">今日更新 · 9 条</span>
+            </div>
+            <article class="wzx_story">
+                <span class="wzx_story-num">01</span>
+                <div>
+                    <h3 class="wzx_story-title">省级重点项目集中开工，先进制造业投资占比提升</h3>
+                    <p class="wzx_story-meta"><span class="wzx_story-tag">项目</span>本省日报 · 25 分钟前</p>
+                </div>
+            </article>
+            <article class="wzx_story">
+                <span class="wzx_story-num">02</span>
+                <div>
+                    <h3 class="wzx_story-title">省内两条高速完成智慧化改造，通行效率预计提升</h3>
+                    <p class="wzx_story-meta"><span class="wzx_story-tag">交通</span>省交通厅 · 1 小时前</p>
+                </div>
+            </article>
+            <article class="wzx_story">
+                <span class="wzx_story-num">03</span>
+                <div>
+                    <h3 class="wzx_story-title">县域医共体实现远程会诊全覆盖，基层首诊率上升</h3>
+                    <p class="wzx_story-meta"><span class="wzx_story-tag">医疗</span>省卫健委 · 2 小时前</p>
+                </div>
+            </article>
+            <article class="wzx_story">
+                <span class="wzx_story-num">04</span>
+                <div>
+                    <h3 class="wzx_story-title">省内高校公布招生计划，新增人工智能与交叉学科专业</h3>
+                    <p class="wzx_story-meta"><span class="wzx_story-tag">教育</span>省教育厅 · 3 小时前</p>
+                </div>
+            </article>
+        </section>
+
+        <section class="wzx_panel" id="wzx_panel-international" role="tabpanel"
+                 aria-labelledby="wzx_tab-international" data-wzx-panel="wzx_panel-international" hidden>
+            <div class="wzx_panel-head">
+                <div>
+                    <p class="wzx_panel-kicker">INTERNATIONAL</p>
+                    <h2 class="wzx_panel-title">国际新闻</h2>
+                </div>
+                <span class="wzx_panel-update">今日更新 · 10 条</span>
+            </div>
+            <article class="wzx_story">
+                <span class="wzx_story-num">01</span>
+                <div>
+                    <h3 class="wzx_story-title">多国代表就气候融资机制展开新一轮磋商</h3>
+                    <p class="wzx_story-meta"><span class="wzx_story-tag">国际</span>新华社 · 30 分钟前</p>
+                </div>
+            </article>
+            <article class="wzx_story">
+                <span class="wzx_story-num">02</span>
+                <div>
+                    <h3 class="wzx_story-title">国际油价小幅回落，市场关注后续供应政策</h3>
+                    <p class="wzx_story-meta"><span class="wzx_story-tag">财经</span>路透社 · 1 小时前</p>
+                </div>
+            </article>
+            <article class="wzx_story">
+                <span class="wzx_story-num">03</span>
+                <div>
+                    <h3 class="wzx_story-title">欧洲多城启动夏季公共交通联合票务试点</h3>
+                    <p class="wzx_story-meta"><span class="wzx_story-tag">城市</span>BBC · 2 小时前</p>
+                </div>
+            </article>
+            <article class="wzx_story">
+                <span class="wzx_story-num">04</span>
+                <div>
+                    <h3 class="wzx_story-title">亚太经合组织会议聚焦数字贸易与跨境数据规则</h3>
+                    <p class="wzx_story-meta"><span class="wzx_story-tag">经贸</span>AP · 3 小时前</p>
+                </div>
+            </article>
+        </section>
+
+        <section class="wzx_panel" id="wzx_panel-hottest" role="tabpanel"
+                 aria-labelledby="wzx_tab-hottest" data-wzx-panel="wzx_panel-hottest" hidden>
+            <div class="wzx_panel-head">
+                <div>
+                    <p class="wzx_panel-kicker">TRENDING</p>
+                    <h2 class="wzx_panel-title">最热新闻</h2>
+                </div>
+                <span class="wzx_panel-update">今日更新 · 15 条</span>
+            </div>
+            <article class="wzx_story">
+                <span class="wzx_story-num">01</span>
+                <div>
+                    <h3 class="wzx_story-title">年度十大科技突破候选名单公布，多项成果来自高校团队</h3>
+                    <p class="wzx_story-meta"><span class="wzx_story-tag">科技</span>科技日报 · 15 分钟前</p>
+                </div>
+            </article>
+            <article class="wzx_story">
+                <span class="wzx_story-num">02</span>
+                <div>
+                    <h3 class="wzx_story-title">城市夜游线路搜索量一周增长三成，博物馆夜场受关注</h3>
+                    <p class="wzx_story-meta"><span class="wzx_story-tag">文旅</span>文旅观察 · 40 分钟前</p>
+                </div>
+            </article>
+            <article class="wzx_story">
+                <span class="wzx_story-num">03</span>
+                <div>
+                    <h3 class="wzx_story-title">青年租房调查显示通勤时间成为首要考虑因素</h3>
+                    <p class="wzx_story-meta"><span class="wzx_story-tag">生活</span>中国青年报 · 1 小时前</p>
+                </div>
+            </article>
+            <article class="wzx_story">
+                <span class="wzx_story-num">04</span>
+                <div>
+                    <h3 class="wzx_story-title">国产动画电影海外票房创新高，衍生品订单同步增长</h3>
+                    <p class="wzx_story-meta"><span class="wzx_story-tag">文娱</span>文娱周刊 · 2 小时前</p>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <footer class="wzx_footer">
+        <p>24002120207 王振旭 · 高级网页设计课堂实践</p>
+        <p>原生 HTML / CSS / JavaScript</p>
+    </footer>
+</div>
+
+<script src="./js/tabs.js"></script>
+</body>
+</html>
