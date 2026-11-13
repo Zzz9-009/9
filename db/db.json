@@ -1,0 +1,34 @@
+{
+  "poems": [
+    {
+      "id": 1,
+      "title": "光之穹顶",
+      "pic": "/assets/exhibition/01-light-dome.jpg",
+      "content": "十二道天光从穹顶落下，\n在雾气里显出一条条路。\n我站在最亮的地方，\n替自己留下一道影子。"
+    },
+    {
+      "id": 2,
+      "title": "影之森林",
+      "pic": "/assets/exhibition/02-shadow-forest.jpg",
+      "content": "光柱从地面升起，\n像一片不会落叶的森林。\n我走过时，\n它们替我亮了一下。"
+    },
+    {
+      "id": 3,
+      "title": "镜面回廊",
+      "pic": "/assets/exhibition/03-mirror-corridor.jpg",
+      "content": "长廊两端都是镜子，\n尽头被推得很远。\n每走一步，\n就有另一个我退后一步。"
+    },
+    {
+      "id": 4,
+      "title": "星尘瀑布",
+      "pic": "/assets/exhibition/04-stardust-falls.jpg",
+      "content": "十万颗尘埃往下落，\n没有一颗重复轨迹。\n像我们说过的话，\n散开之后就再不重来。"
+    },
+    {
+      "id": 5,
+      "title": "霓虹涟漪",
+      "pic": "/assets/exhibition/05-neon-ripples.jpg",
+      "content": "水面很浅，光很轻，\n一圈一圈跟着呼吸走。\n我把手放进去，\n整个夜晚就晃了一下。"
+    }
+  ]
+}

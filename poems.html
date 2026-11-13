@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<!--
+  作者：王振旭
+  建立时间：2026-11-13
+  使用大模型：DeepSeek-V4.1-Flash
+  功能名称：从本地 Express 服务器读取诗歌数据并渲染图文列表
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="通过 fetch 从本地 3004 端口服务器获取诗歌的图片、标题与正文">
+    <title>光与影 · 诗页</title>
+    <style>
+        :root {
+            --wzx_ink: #1c1a17;
+            --wzx_muted: #736c62;
+            --wzx_paper: #f7f4ee;
+            --wzx_card: #fffdf9;
+            --wzx_line: #e3dcd0;
+            --wzx_accent: #9a5b32;
+            --wzx_ok: #2f6b4f;
+            --wzx_err: #a33a2a;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-width: 320px;
+            margin: 0;
+            color: var(--wzx_ink);
+            background:
+                radial-gradient(circle at 88% -6%, rgba(154, 91, 50, 0.09), rgba(154, 91, 50, 0) 42%),
+                var(--wzx_paper);
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            line-height: 1.7;
+        }
+
+        .wzx_page {
+            width: min(940px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 44px 0 64px;
+        }
+
+        .wzx_head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            padding-bottom: 22px;
+            border-bottom: 1px solid var(--wzx_line);
+        }
+
+        .wzx_kicker {
+            margin: 0 0 10px;
+            color: var(--wzx_accent);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.2em;
+        }
+
+        .wzx_title {
+            margin: 0;
+            font-family: "Songti SC", "SimSun", Georgia, serif;
+            font-size: clamp(32px, 6vw, 52px);
+            font-weight: 400;
+            line-height: 1.12;
+            letter-spacing: -0.02em;
+        }
+
+        .wzx_lead {
+            max-width: 340px;
+            margin: 0;
+            color: var(--wzx_muted);
+            font-size: 13px;
+        }
+
+        .wzx_toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 14px;
+            margin: 18px 0 26px;
+        }
+
+        .wzx_source {
+            flex: 1 1 260px;
+            color: var(--wzx_muted);
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .wzx_source code {
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #efe9de;
+            font-size: 11px;
+        }
+
+        .wzx_status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .wzx_status::before {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            content: "";
+        }
+
+        .wzx_status--loading { color: #8a6d2f; background: #f7eed8; }
+        .wzx_status--ok { color: var(--wzx_ok); background: #e4f1e9; }
+        .wzx_status--error { color: var(--wzx_err); background: #fae8e4; }
+
+        .wzx_refresh {
+            min-height: 38px;
+            padding: 0 16px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 999px;
+            color: var(--wzx_ink);
+            background: var(--wzx_card);
+            font: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: border-color 160ms ease, color 160ms ease;
+        }
+
+        .wzx_refresh:hover { border-color: var(--wzx_accent); color: var(--wzx_accent); }
+
+        .wzx_refresh:focus-visible {
+            outline: 2px solid var(--wzx_accent);
+            outline-offset: 2px;
+        }
+
+        .wzx_list {
+            display: grid;
+            gap: 22px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .wzx_card {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+            overflow: hidden;
+            border: 1px solid var(--wzx_line);
+            border-radius: 16px;
+            background: var(--wzx_card);
+            box-shadow: 0 14px 34px rgba(28, 26, 23, 0.06);
+        }
+
+        .wzx_card:nth-child(even) .wzx_media { order: 2; }
+
+        .wzx_media {
+            position: relative;
+            min-height: 220px;
+            background: #eae4d8;
+        }
+
+        .wzx_media img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .wzx_card-body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 10px;
+            padding: 26px clamp(20px, 4vw, 34px);
+        }
+
+        .wzx_card-index {
+            margin: 0;
+            color: var(--wzx_accent);
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 12px;
+            letter-spacing: 0.22em;
+        }
+
+        .wzx_card-title {
+            margin: 0;
+            font-family: "Songti SC", "SimSun", Georgia, serif;
+            font-size: 24px;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+        }
+
+        .wzx_card-text {
+            margin: 0;
+            color: #4a453d;
+            font-family: "Songti SC", "SimSun", Georgia, serif;
+            font-size: 15px;
+            line-height: 2;
+            white-space: pre-line;
+        }
+
+        .wzx_empty,
+        .wzx_error {
+            padding: 30px;
+            border: 1px dashed var(--wzx_line);
+            border-radius: 14px;
+            background: var(--wzx_card);
+            text-align: center;
+        }
+
+        .wzx_error h3 { margin: 0 0 8px; color: var(--wzx_err); font-size: 16px; }
+
+        .wzx_error p { margin: 0; color: var(--wzx_muted); font-size: 13px; }
+
+        .wzx_error pre {
+            margin: 14px 0 0;
+            padding: 12px;
+            overflow-x: auto;
+            border-radius: 8px;
+            background: #201d19;
+            color: #e8e2d6;
+            font-size: 12.5px;
+            text-align: left;
+        }
+
+        .wzx_foot {
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid var(--wzx_line);
+            color: var(--wzx_muted);
+            font-size: 12px;
+        }
+
+        @media (max-width: 720px) {
+            .wzx_card { grid-template-columns: 1fr; }
+            .wzx_card:nth-child(even) .wzx_media { order: 0; }
+            .wzx_media { min-height: 0; aspect-ratio: 16 / 9; }
+            .wzx_card-body { padding: 20px; }
+            .wzx_card-title { font-size: 21px; }
+            .wzx_status { order: -1; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .wzx_refresh { transition: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="wzx_page">
+    <header class="wzx_head">
+        <div>
+            <p class="wzx_kicker">LOCAL API / PORT 3004</p>
+            <h1 class="wzx_title">光与影 · 诗页</h1>
+        </div>
+        <p class="wzx_lead">文字与图片都不写死在页面里，全部由本地 Express 服务器读取 db.json 后返回。</p>
+    </header>
+
+    <div class="wzx_toolbar">
+        <span class="wzx_status wzx_status--loading" id="wzx_status">正在加载</span>
+        <span class="wzx_source">接口地址：<code id="wzx_apiText">http://localhost:3004/api/poems</code></span>
+        <button class="wzx_refresh" type="button" id="wzx_refresh">重新获取</button>
+    </div>
+
+    <main>
+        <ul class="wzx_list" id="wzx_list" aria-live="polite"></ul>
+        <div class="wzx_empty" id="wzx_empty" hidden>服务器返回的 poems 是空数组，请在 db.json 中添加内容后重启服务。</div>
+        <div class="wzx_error" id="wzx_error" hidden>
+            <h3>没有连上数据服务器</h3>
+            <p>请先在终端进入 db 文件夹并启动服务，然后点击「重新获取」。</p>
+            <pre>cd db
+node server.js</pre>
+        </div>
+    </main>
+
+    <footer class="wzx_foot">24002120207 王振旭 · 高级网页设计课堂实践 · 数据来自 db/db.json</footer>
+</div>
+
+<script>
+  // 数据服务器接口地址，端口与 db/server.js 保持一致
+  const wzx_apiUrl = "http://localhost:3004/api/poems";
+  // 服务器图片使用相对路径返回，页面需要拼接成完整地址
+  const wzx_assetBase = "http://localhost:3004";
+
+  // 功能：设置顶部状态标签的文字与颜色状态
+  function wzx_setStatus(wzx_text, wzx_type) {
+    const wzx_status = document.getElementById("wzx_status");
+    wzx_status.textContent = wzx_text;
+    wzx_status.className = "wzx_status wzx_status--" + wzx_type;
+  }
+
+  // 功能：把单条诗歌数据转换成一张图文卡片
+  function wzx_createCard(wzx_poem, wzx_index) {
+    const wzx_item = document.createElement("li");
+    const wzx_card = document.createElement("article");
+    wzx_card.className = "wzx_card";
+
+    const wzx_media = document.createElement("div");
+    wzx_media.className = "wzx_media";
+    const wzx_img = document.createElement("img");
+    wzx_img.src = wzx_assetBase + wzx_poem.pic;
+    wzx_img.alt = wzx_poem.title;
+    wzx_img.loading = "lazy";
+    wzx_media.appendChild(wzx_img);
+
+    const wzx_body = document.createElement("div");
+    wzx_body.className = "wzx_card-body";
+
+    const wzx_indexText = document.createElement("p");
+    wzx_indexText.className = "wzx_card-index";
+    wzx_indexText.textContent = "POEM " + String(wzx_index + 1).padStart(2, "0");
+
+    const wzx_title = document.createElement("h2");
+    wzx_title.className = "wzx_card-title";
+    wzx_title.textContent = wzx_poem.title;
+
+    const wzx_content = document.createElement("p");
+    wzx_content.className = "wzx_card-text";
+    wzx_content.textContent = wzx_poem.content;
+
+    wzx_body.appendChild(wzx_indexText);
+    wzx_body.appendChild(wzx_title);
+    wzx_body.appendChild(wzx_content);
+    wzx_card.appendChild(wzx_media);
+    wzx_card.appendChild(wzx_body);
+    wzx_item.appendChild(wzx_card);
+
+    return wzx_item;
+  }
+
+  // 功能：清空列表后渲染全部诗歌，并处理空数组的情况
+  function wzx_renderPoems(wzx_poems) {
+    const wzx_list = document.getElementById("wzx_list");
+    const wzx_empty = document.getElementById("wzx_empty");
+    wzx_list.innerHTML = "";
+
+    if (!wzx_poems.length) {
+      wzx_empty.hidden = false;
+      wzx_setStatus("暂无数据", "error");
+      return;
+    }
+
+    wzx_empty.hidden = true;
+    const wzx_fragment = document.createDocumentFragment();
+    wzx_poems.forEach(function (wzx_poem, wzx_index) {
+      wzx_fragment.appendChild(wzx_createCard(wzx_poem, wzx_index));
+    });
+    wzx_list.appendChild(wzx_fragment);
+    wzx_setStatus("已连接 · " + wzx_poems.length + " 首", "ok");
+  }
+
+  // 功能：请求失败时显示启动说明，并更新状态标签
+  function wzx_showError(wzx_error) {
+    document.getElementById("wzx_error").hidden = false;
+    document.getElementById("wzx_list").innerHTML = "";
+    document.getElementById("wzx_empty").hidden = true;
+    wzx_setStatus("连接失败", "error");
+    console.error("获取诗歌数据失败：", wzx_error);
+  }
+
+  // 功能：调用本地接口获取诗歌数据，成功后交给渲染函数
+  function wzx_fetchPoems() {
+    document.getElementById("wzx_error").hidden = true;
+    document.getElementById("wzx_empty").hidden = true;
+    wzx_setStatus("正在加载", "loading");
+
+    fetch(wzx_apiUrl)
+      .then(function (wzx_res) {
+        if (!wzx_res.ok) {
+          throw new Error("接口返回状态码 " + wzx_res.status);
+        }
+        return wzx_res.json();
+      })
+      .then(function (wzx_data) {
+        console.log("接口返回的 poems：", wzx_data);
+        wzx_renderPoems(Array.isArray(wzx_data) ? wzx_data : []);
+      })
+      .catch(wzx_showError);
+  }
+
+  // 功能：绑定重新获取按钮，并初始化接口地址显示与首次请求
+  function wzx_init() {
+    document.getElementById("wzx_apiText").textContent = wzx_apiUrl;
+    document.getElementById("wzx_refresh").addEventListener("click", wzx_fetchPoems);
+    wzx_fetchPoems();
+  }
+
+  wzx_init();
+</script>
+</body>
+</html>
