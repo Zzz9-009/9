@@ -3,13 +3,13 @@
   作者：王振旭
   建立时间：2026-11-13
   使用大模型：DeepSeek-V4.1-Flash
-  功能名称：从本地 Express 服务器读取诗歌数据并渲染图文列表
+  功能名称：从本地 Express 服务器并发获取诗歌与作者数据，支持搜索与标题长度排序
 -->
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="通过 fetch 从本地 3004 端口服务器获取诗歌的图片、标题与正文">
+    <meta name="description" content="用 Promise.all 同时获取诗歌与作者数据，支持关键字搜索与按标题长度排序">
     <title>光与影 · 诗页</title>
     <style>
         :root {
@@ -80,22 +80,8 @@
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 10px 14px;
-            margin: 18px 0 26px;
-        }
-
-        .wzx_source {
-            flex: 1 1 260px;
-            color: var(--wzx_muted);
-            font-size: 12px;
-            word-break: break-all;
-        }
-
-        .wzx_source code {
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: #efe9de;
-            font-size: 11px;
+            gap: 10px;
+            margin: 18px 0 14px;
         }
 
         .wzx_status {
@@ -120,26 +106,90 @@
         .wzx_status--ok { color: var(--wzx_ok); background: #e4f1e9; }
         .wzx_status--error { color: var(--wzx_err); background: #fae8e4; }
 
-        .wzx_refresh {
-            min-height: 38px;
-            padding: 0 16px;
+        .wzx_source {
+            flex: 1 1 240px;
+            color: var(--wzx_muted);
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .wzx_source code {
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #efe9de;
+            font-size: 11px;
+        }
+
+        .wzx_controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
             border: 1px solid var(--wzx_line);
-            border-radius: 999px;
-            color: var(--wzx_ink);
+            border-radius: 12px;
             background: var(--wzx_card);
+        }
+
+        .wzx_search {
+            flex: 1 1 220px;
+            min-height: 40px;
+            padding: 0 12px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 8px;
+            color: var(--wzx_ink);
+            background: #fdfbf7;
+            font: inherit;
+            font-size: 13px;
+        }
+
+        .wzx_search:focus-visible,
+        .wzx_button:focus-visible {
+            outline: 2px solid var(--wzx_accent);
+            outline-offset: 2px;
+        }
+
+        .wzx_button {
+            min-height: 40px;
+            padding: 0 15px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 8px;
+            color: var(--wzx_ink);
+            background: #fdfbf7;
             font: inherit;
             font-size: 13px;
             font-weight: 700;
             cursor: pointer;
-            transition: border-color 160ms ease, color 160ms ease;
+            transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
         }
 
-        .wzx_refresh:hover { border-color: var(--wzx_accent); color: var(--wzx_accent); }
+        .wzx_button:hover { border-color: var(--wzx_accent); color: var(--wzx_accent); }
 
-        .wzx_refresh:focus-visible {
-            outline: 2px solid var(--wzx_accent);
-            outline-offset: 2px;
+        .wzx_button--on {
+            color: #fff;
+            border-color: var(--wzx_accent);
+            background: var(--wzx_accent);
         }
+
+        .wzx_button--on:hover { color: #fff; }
+
+        .wzx_chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 14px 0 24px;
+        }
+
+        .wzx_chip {
+            padding: 3px 10px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 999px;
+            color: var(--wzx_muted);
+            background: #fffdf9;
+            font-size: 12px;
+        }
+
+        .wzx_chip strong { color: var(--wzx_ink); font-weight: 700; }
 
         .wzx_list {
             display: grid;
@@ -178,7 +228,7 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             padding: 26px clamp(20px, 4vw, 34px);
         }
 
@@ -198,8 +248,14 @@
             letter-spacing: 0.02em;
         }
 
-        .wzx_card-text {
+        .wzx_card-author {
             margin: 0;
+            color: var(--wzx_muted);
+            font-size: 12px;
+        }
+
+        .wzx_card-text {
+            margin: 4px 0 0;
             color: #4a453d;
             font-family: "Songti SC", "SimSun", Georgia, serif;
             font-size: 15px;
@@ -216,8 +272,12 @@
             text-align: center;
         }
 
-        .wzx_error h3 { margin: 0 0 8px; color: var(--wzx_err); font-size: 16px; }
+        .wzx_empty h3,
+        .wzx_error h3 { margin: 0 0 8px; font-size: 16px; }
+        .wzx_empty h3 { color: var(--wzx_muted); }
+        .wzx_error h3 { color: var(--wzx_err); }
 
+        .wzx_empty p,
         .wzx_error p { margin: 0; color: var(--wzx_muted); font-size: 13px; }
 
         .wzx_error pre {
@@ -231,8 +291,27 @@
             text-align: left;
         }
 
+        .wzx_qa {
+            margin-top: 26px;
+            padding: 16px 20px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 12px;
+            background: #fffdf9;
+            font-size: 13px;
+        }
+
+        .wzx_qa summary {
+            color: var(--wzx_accent);
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .wzx_qa ol { margin: 12px 0 0; padding-left: 20px; color: #4a453d; }
+        .wzx_qa li + li { margin-top: 8px; }
+        .wzx_qa strong { color: var(--wzx_ink); }
+
         .wzx_foot {
-            margin-top: 32px;
+            margin-top: 30px;
             padding-top: 16px;
             border-top: 1px solid var(--wzx_line);
             color: var(--wzx_muted);
@@ -245,11 +324,13 @@
             .wzx_media { min-height: 0; aspect-ratio: 16 / 9; }
             .wzx_card-body { padding: 20px; }
             .wzx_card-title { font-size: 21px; }
-            .wzx_status { order: -1; }
+            .wzx_source { flex-basis: 100%; order: 3; }
+            .wzx_controls { padding: 10px; }
+            .wzx_search { flex-basis: 100%; }
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .wzx_refresh { transition: none; }
+            .wzx_button { transition: none; }
         }
     </style>
 </head>
@@ -260,40 +341,89 @@
             <p class="wzx_kicker">LOCAL API / PORT 3004</p>
             <h1 class="wzx_title">光与影 · 诗页</h1>
         </div>
-        <p class="wzx_lead">文字与图片都不写死在页面里，全部由本地 Express 服务器读取 db.json 后返回。</p>
+        <p class="wzx_lead">诗句与作者都来自本地 Express 服务器：两个接口用 Promise.all 并发取回，前端只负责筛选与排序。</p>
     </header>
 
     <div class="wzx_toolbar">
         <span class="wzx_status wzx_status--loading" id="wzx_status">正在加载</span>
-        <span class="wzx_source">接口地址：<code id="wzx_apiText">http://localhost:3004/api/poems</code></span>
-        <button class="wzx_refresh" type="button" id="wzx_refresh">重新获取</button>
+        <span class="wzx_source">接口：<code id="wzx_apiText">/api/poems</code></span>
     </div>
+
+    <div class="wzx_controls">
+        <input class="wzx_search" id="wzx_search" type="search" placeholder="搜索标题或诗句，如「月」「江」" aria-label="搜索诗词">
+        <button class="wzx_button" id="wzx_sort" type="button" aria-pressed="false">按标题长度排序</button>
+        <button class="wzx_button" id="wzx_refresh" type="button">重新获取</button>
+    </div>
+
+    <div class="wzx_chips" id="wzx_chips" aria-label="作者列表"></div>
 
     <main>
         <ul class="wzx_list" id="wzx_list" aria-live="polite"></ul>
-        <div class="wzx_empty" id="wzx_empty" hidden>服务器返回的 poems 是空数组，请在 db.json 中添加内容后重启服务。</div>
+        <div class="wzx_empty" id="wzx_empty" hidden>
+            <h3>没有匹配的诗词</h3>
+            <p>换一个关键字试试，或清空搜索框查看全部。</p>
+        </div>
         <div class="wzx_error" id="wzx_error" hidden>
             <h3>没有连上数据服务器</h3>
-            <p>请先在终端进入 db 文件夹并启动服务，然后点击「重新获取」。</p>
+            <p>请先在终端进入 db 文件夹启动服务，再点击「重新获取」。</p>
             <pre>cd db
 node server.js</pre>
         </div>
     </main>
+
+    <details class="wzx_qa">
+        <summary>答辩备查：四个必答问题</summary>
+        <ol>
+            <li><strong>为什么 fetch 要写两个 then？</strong>第一个 then 拿到的还是响应对象，只能确认状态码与头信息；调用 <code>res.json()</code> 读取并解析响应体本身是异步的，所以需要第二个 then 才能拿到真正的数据。</li>
+            <li><strong>.json() 之前拿到的是什么？</strong>是一个 Response 对象，包含 <code>status</code>、<code>ok</code>、<code>headers</code> 等元信息，以及尚未读取的 <code>body</code> 数据流，还不能直接当数组遍历。</li>
+            <li><strong>CORS 是谁拦的？</strong>是浏览器拦的，不是服务器。浏览器在收到响应后检查 <code>Access-Control-Allow-Origin</code>，不匹配就不把结果交给页面脚本；服务器端的日志里其实已经正常返回了。</li>
+            <li><strong>服务器没启动，页面表现如何？</strong>fetch 会直接失败进入 catch 分支，页面显示「没有连上数据服务器」和启动命令，而不是白屏；控制台能看到 <code>ERR_CONNECTION_REFUSED</code>。</li>
+        </ol>
+    </details>
 
     <footer class="wzx_foot">24002120207 王振旭 · 高级网页设计课堂实践 · 数据来自 db/db.json</footer>
 </div>
 
 <script>
   // 数据服务器接口地址，端口与 db/server.js 保持一致
-  const wzx_apiUrl = "http://localhost:3004/api/poems";
+  const wzx_apiBase = "http://localhost:3004";
   // 服务器图片使用相对路径返回，页面需要拼接成完整地址
-  const wzx_assetBase = "http://localhost:3004";
+  const wzx_assetBase = wzx_apiBase;
+
+  // 页面状态：全部诗歌、全部作者、当前关键字、排序方向
+  let wzx_poems = [];
+  let wzx_authors = [];
+  let wzx_keyword = "";
+  let wzx_sortAsc = null;
 
   // 功能：设置顶部状态标签的文字与颜色状态
   function wzx_setStatus(wzx_text, wzx_type) {
     const wzx_status = document.getElementById("wzx_status");
     wzx_status.textContent = wzx_text;
     wzx_status.className = "wzx_status wzx_status--" + wzx_type;
+  }
+
+  // 功能：根据关键字与排序设置，返回当前需要展示的诗歌数组
+  function wzx_getVisiblePoems() {
+    const wzx_text = wzx_keyword.trim();
+
+    let wzx_result = wzx_poems.filter(function (wzx_poem) {
+      if (!wzx_text) {
+        return true;
+      }
+      const wzx_title = wzx_poem.title || "";
+      const wzx_content = wzx_poem.content || "";
+      return wzx_title.indexOf(wzx_text) > -1 || wzx_content.indexOf(wzx_text) > -1;
+    });
+
+    if (wzx_sortAsc !== null) {
+      wzx_result = wzx_result.slice().sort(function (wzx_a, wzx_b) {
+        const wzx_diff = (wzx_a.title || "").length - (wzx_b.title || "").length;
+        return wzx_sortAsc ? wzx_diff : -wzx_diff;
+      });
+    }
+
+    return wzx_result;
   }
 
   // 功能：把单条诗歌数据转换成一张图文卡片
@@ -321,12 +451,17 @@ node server.js</pre>
     wzx_title.className = "wzx_card-title";
     wzx_title.textContent = wzx_poem.title;
 
+    const wzx_author = document.createElement("p");
+    wzx_author.className = "wzx_card-author";
+    wzx_author.textContent = "〔" + (wzx_poem.dynasty || "") + "〕" + (wzx_poem.author || "佚名");
+
     const wzx_content = document.createElement("p");
     wzx_content.className = "wzx_card-text";
     wzx_content.textContent = wzx_poem.content;
 
     wzx_body.appendChild(wzx_indexText);
     wzx_body.appendChild(wzx_title);
+    wzx_body.appendChild(wzx_author);
     wzx_body.appendChild(wzx_content);
     wzx_card.appendChild(wzx_media);
     wzx_card.appendChild(wzx_body);
@@ -335,61 +470,137 @@ node server.js</pre>
     return wzx_item;
   }
 
-  // 功能：清空列表后渲染全部诗歌，并处理空数组的情况
-  function wzx_renderPoems(wzx_poems) {
+  // 功能：渲染作者标签区，展示作者、朝代与收录篇数
+  function wzx_renderAuthors(wzx_list) {
+    const wzx_chips = document.getElementById("wzx_chips");
+    wzx_chips.innerHTML = "";
+
+    if (!wzx_list.length) {
+      return;
+    }
+
+    const wzx_label = document.createElement("span");
+    wzx_label.className = "wzx_chip";
+    wzx_label.innerHTML = "作者 <strong>" + wzx_list.length + "</strong> 位";
+    wzx_chips.appendChild(wzx_label);
+
+    wzx_list.forEach(function (wzx_author) {
+      const wzx_chip = document.createElement("span");
+      wzx_chip.className = "wzx_chip";
+      wzx_chip.innerHTML = "<strong>" + wzx_author.author + "</strong> " +
+        (wzx_author.dynasty || "") + " · " + wzx_author.count + " 首";
+      wzx_chips.appendChild(wzx_chip);
+    });
+  }
+
+  // 功能：按当前关键字与排序渲染列表，并处理无数据与无匹配的情况
+  function wzx_renderList() {
+    const wzx_visible = wzx_getVisiblePoems();
     const wzx_list = document.getElementById("wzx_list");
     const wzx_empty = document.getElementById("wzx_empty");
     wzx_list.innerHTML = "";
 
-    if (!wzx_poems.length) {
+    if (!wzx_visible.length) {
       wzx_empty.hidden = false;
-      wzx_setStatus("暂无数据", "error");
       return;
     }
 
     wzx_empty.hidden = true;
     const wzx_fragment = document.createDocumentFragment();
-    wzx_poems.forEach(function (wzx_poem, wzx_index) {
+    wzx_visible.forEach(function (wzx_poem, wzx_index) {
       wzx_fragment.appendChild(wzx_createCard(wzx_poem, wzx_index));
     });
     wzx_list.appendChild(wzx_fragment);
-    wzx_setStatus("已连接 · " + wzx_poems.length + " 首", "ok");
+  }
+
+  // 功能：根据数据量刷新状态标签，展示总数与当前筛选结果数
+  function wzx_updateStatus() {
+    const wzx_visible = wzx_getVisiblePoems();
+    if (!wzx_poems.length) {
+      wzx_setStatus("暂无数据", "error");
+      return;
+    }
+    const wzx_text = wzx_visible.length === wzx_poems.length
+      ? "已连接 · " + wzx_poems.length + " 首 / " + wzx_authors.length + " 位作者"
+      : "匹配 " + wzx_visible.length + " / " + wzx_poems.length + " 首";
+    wzx_setStatus(wzx_text, "ok");
   }
 
   // 功能：请求失败时显示启动说明，并更新状态标签
   function wzx_showError(wzx_error) {
     document.getElementById("wzx_error").hidden = false;
-    document.getElementById("wzx_list").innerHTML = "";
     document.getElementById("wzx_empty").hidden = true;
+    document.getElementById("wzx_list").innerHTML = "";
+    document.getElementById("wzx_chips").innerHTML = "";
     wzx_setStatus("连接失败", "error");
-    console.error("获取诗歌数据失败：", wzx_error);
+    console.error("获取数据失败：", wzx_error);
   }
 
-  // 功能：调用本地接口获取诗歌数据，成功后交给渲染函数
-  function wzx_fetchPoems() {
+  // 功能：用 Promise.all 同时请求诗歌与作者接口，两份数据都到齐后再渲染
+  function wzx_fetchAll() {
     document.getElementById("wzx_error").hidden = true;
     document.getElementById("wzx_empty").hidden = true;
     wzx_setStatus("正在加载", "loading");
 
-    fetch(wzx_apiUrl)
-      .then(function (wzx_res) {
-        if (!wzx_res.ok) {
-          throw new Error("接口返回状态码 " + wzx_res.status);
-        }
-        return wzx_res.json();
-      })
-      .then(function (wzx_data) {
-        console.log("接口返回的 poems：", wzx_data);
-        wzx_renderPoems(Array.isArray(wzx_data) ? wzx_data : []);
+    const wzx_poemsRequest = fetch(wzx_apiBase + "/api/poems").then(function (wzx_res) {
+      if (!wzx_res.ok) {
+        throw new Error("poems 接口返回状态码 " + wzx_res.status);
+      }
+      return wzx_res.json();
+    });
+
+    const wzx_authorsRequest = fetch(wzx_apiBase + "/api/authors").then(function (wzx_res) {
+      if (!wzx_res.ok) {
+        throw new Error("authors 接口返回状态码 " + wzx_res.status);
+      }
+      return wzx_res.json();
+    });
+
+    Promise.all([wzx_poemsRequest, wzx_authorsRequest])
+      .then(function (wzx_result) {
+        console.log("诗歌接口返回：", wzx_result[0]);
+        console.log("作者接口返回：", wzx_result[1]);
+        wzx_poems = Array.isArray(wzx_result[0]) ? wzx_result[0] : [];
+        wzx_authors = Array.isArray(wzx_result[1]) ? wzx_result[1] : [];
+        wzx_renderAuthors(wzx_authors);
+        wzx_renderList();
+        wzx_updateStatus();
       })
       .catch(wzx_showError);
   }
 
-  // 功能：绑定重新获取按钮，并初始化接口地址显示与首次请求
+  // 功能：绑定搜索框、排序按钮与重新获取按钮，并启动首次请求
   function wzx_init() {
-    document.getElementById("wzx_apiText").textContent = wzx_apiUrl;
-    document.getElementById("wzx_refresh").addEventListener("click", wzx_fetchPoems);
-    wzx_fetchPoems();
+    document.getElementById("wzx_apiText").textContent = wzx_apiBase + "/api/poems + /api/authors";
+
+    document.getElementById("wzx_search").addEventListener("input", function (wzx_event) {
+      wzx_keyword = wzx_event.target.value;
+      wzx_renderList();
+      wzx_updateStatus();
+    });
+
+    document.getElementById("wzx_sort").addEventListener("click", function (wzx_event) {
+      const wzx_button = wzx_event.currentTarget;
+      if (wzx_sortAsc === null) {
+        wzx_sortAsc = true;
+      } else if (wzx_sortAsc === true) {
+        wzx_sortAsc = false;
+      } else {
+        wzx_sortAsc = null;
+      }
+
+      const wzx_isSorted = wzx_sortAsc !== null;
+      wzx_button.classList.toggle("wzx_button--on", wzx_isSorted);
+      wzx_button.setAttribute("aria-pressed", wzx_isSorted ? "true" : "false");
+      wzx_button.textContent = wzx_sortAsc === null
+        ? "按标题长度排序"
+        : (wzx_sortAsc ? "标题：短 → 长" : "标题：长 → 短");
+
+      wzx_renderList();
+    });
+
+    document.getElementById("wzx_refresh").addEventListener("click", wzx_fetchAll);
+    wzx_fetchAll();
   }
 
   wzx_init();

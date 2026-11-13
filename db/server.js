@@ -22,6 +22,25 @@ function wzx_loadPoems() {
 // 启动时读取一次，改动 db.json 后需要重启服务才会生效
 const wzx_poems = wzx_loadPoems();
 
+// 功能：从诗歌数据中汇总作者列表，统计每位作者收录的篇数
+function wzx_buildAuthors(wzx_list) {
+  const wzx_map = new Map();
+  wzx_list.forEach(function (wzx_poem) {
+    const wzx_key = wzx_poem.author || "佚名";
+    if (!wzx_map.has(wzx_key)) {
+      wzx_map.set(wzx_key, {
+        author: wzx_key,
+        dynasty: wzx_poem.dynasty || "",
+        count: 0
+      });
+    }
+    wzx_map.get(wzx_key).count += 1;
+  });
+  return Array.from(wzx_map.values());
+}
+
+const wzx_authors = wzx_buildAuthors(wzx_poems);
+
 // 功能：为所有响应添加跨域头，允许前端以 file:// 或本地端口方式访问接口
 wzx_app.use(function (wzx_req, wzx_res, wzx_next) {
   wzx_res.setHeader("Access-Control-Allow-Origin", "*");
@@ -37,8 +56,14 @@ wzx_app.get("/api/poems", function (wzx_req, wzx_res) {
   wzx_res.json(wzx_poems);
 });
 
+// 功能：提供作者数据接口，返回作者、朝代与收录篇数
+wzx_app.get("/api/authors", function (wzx_req, wzx_res) {
+  wzx_res.json(wzx_authors);
+});
+
 // 功能：启动服务并输出接口地址，供前端 fetch 使用
 wzx_app.listen(wzx_port, function () {
   console.log("数据服务器已启动: http://localhost:" + wzx_port + "/api/poems");
-  console.log("共读取 " + wzx_poems.length + " 首诗歌，修改 db.json 后请重启服务");
+  console.log("作者接口: http://localhost:" + wzx_port + "/api/authors");
+  console.log("共读取 " + wzx_poems.length + " 首诗歌 / " + wzx_authors.length + " 位作者，修改 db.json 后请重启服务");
 });

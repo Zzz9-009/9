@@ -2,33 +2,51 @@
   "poems": [
     {
       "id": 1,
-      "title": "光之穹顶",
+      "title": "望庐山瀑布",
+      "author": "李白",
+      "dynasty": "唐",
       "pic": "/assets/exhibition/01-light-dome.jpg",
-      "content": "十二道天光从穹顶落下，\n在雾气里显出一条条路。\n我站在最亮的地方，\n替自己留下一道影子。"
+      "content": "日照香炉生紫烟，\n遥看瀑布挂前川。\n飞流直下三千尺，\n疑是银河落九天。"
     },
     {
       "id": 2,
-      "title": "影之森林",
+      "title": "枫桥夜泊",
+      "author": "张继",
+      "dynasty": "唐",
       "pic": "/assets/exhibition/02-shadow-forest.jpg",
-      "content": "光柱从地面升起，\n像一片不会落叶的森林。\n我走过时，\n它们替我亮了一下。"
+      "content": "月落乌啼霜满天，\n江枫渔火对愁眠。\n姑苏城外寒山寺，\n夜半钟声到客船。"
     },
     {
       "id": 3,
-      "title": "镜面回廊",
+      "title": "山居秋暝",
+      "author": "王维",
+      "dynasty": "唐",
       "pic": "/assets/exhibition/03-mirror-corridor.jpg",
-      "content": "长廊两端都是镜子，\n尽头被推得很远。\n每走一步，\n就有另一个我退后一步。"
+      "content": "空山新雨后，\n天气晚来秋。\n明月松间照，\n清泉石上流。"
     },
     {
       "id": 4,
-      "title": "星尘瀑布",
+      "title": "暮江吟",
+      "author": "白居易",
+      "dynasty": "唐",
       "pic": "/assets/exhibition/04-stardust-falls.jpg",
-      "content": "十万颗尘埃往下落，\n没有一颗重复轨迹。\n像我们说过的话，\n散开之后就再不重来。"
+      "content": "一道残阳铺水中，\n半江瑟瑟半江红。\n可怜九月初三夜，\n露似真珠月似弓。"
     },
     {
       "id": 5,
-      "title": "霓虹涟漪",
+      "title": "秋夕",
+      "author": "杜牧",
+      "dynasty": "唐",
       "pic": "/assets/exhibition/05-neon-ripples.jpg",
-      "content": "水面很浅，光很轻，\n一圈一圈跟着呼吸走。\n我把手放进去，\n整个夜晚就晃了一下。"
+      "content": "银烛秋光冷画屏，\n轻罗小扇扑流萤。\n天阶夜色凉如水，\n卧看牵牛织女星。"
+    },
+    {
+      "id": 6,
+      "title": "望月怀远",
+      "author": "张九龄",
+      "dynasty": "唐",
+      "pic": "/assets/exhibition/06-adora-magic-city.jpg",
+      "content": "海上生明月，\n天涯共此时。\n情人怨遥夜，\n竟夕起相思。"
     }
   ]
 }
