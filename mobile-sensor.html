@@ -3,14 +3,14 @@
   作者：王振旭（24002120207）
   建立时间：2026-11-18
   使用大模型：DeepSeek-V4.1-Flash
-  功能名称：摇一摇抽今日菜谱，含 1.5 秒冷却、iOS 权限申请与无传感器降级
+  功能名称：设备事件练习，摇一摇抽菜谱 + 陀螺仪倾斜视差，含权限申请与无传感器降级
 -->
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="移动端设备事件练习：摇一摇抽取今日菜谱，支持权限申请与降级">
-    <title>摇一摇 · 今日菜谱</title>
+    <meta name="description" content="移动端设备事件练习：摇一摇抽今日菜谱与陀螺仪倾斜视差">
+    <title>设备事件 · 摇一摇 / 倾斜视差</title>
     <style>
         :root {
             --wzx_ink: #1a1712;
@@ -56,17 +56,43 @@
         .wzx_head h1 {
             margin: 0;
             font-family: "Songti SC", "SimSun", serif;
-            font-size: 22px;
+            font-size: 21px;
             font-weight: 400;
         }
 
         .wzx_head span { color: var(--wzx_muted); font-size: 12px; }
 
+        .wzx_tabs {
+            display: inline-flex;
+            margin: 16px 0 0;
+            padding: 3px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 999px;
+            background: #fffdf8;
+        }
+
+        .wzx_tab {
+            min-height: 34px;
+            padding: 0 18px;
+            border: 0;
+            border-radius: 999px;
+            color: var(--wzx_muted);
+            background: transparent;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: color 160ms ease, background-color 160ms ease;
+        }
+
+        .wzx_tab--on { color: #fff; background: var(--wzx_accent); }
+        .wzx_tab:focus-visible { outline: 2px solid var(--wzx_accent); outline-offset: 2px; }
+
         .wzx_state {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            margin: 18px 0 0;
+            margin: 14px 0 0;
             padding: 4px 11px;
             border-radius: 999px;
             font-size: 12px;
@@ -87,8 +113,8 @@
 
         .wzx_phone {
             position: relative;
-            margin: 20px 0 0;
-            padding: 34px 22px;
+            margin: 18px 0 0;
+            padding: 30px 22px;
             border: 1px solid var(--wzx_line);
             border-radius: 22px;
             background: #fffdf8;
@@ -121,7 +147,7 @@
         .wzx_phone p { margin: 0; color: var(--wzx_muted); font-size: 13px; }
 
         .wzx_result {
-            margin: 20px 0 0;
+            margin: 18px 0 0;
             padding: 20px;
             border: 1px dashed var(--wzx_line);
             border-radius: 16px;
@@ -157,7 +183,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
-            margin: 18px 0 0;
+            margin: 16px 0 0;
         }
 
         .wzx_btn {
@@ -197,6 +223,83 @@
 
         .wzx_notice[hidden] { display: none; }
 
+        .wzx_scene {
+            position: relative;
+            height: 300px;
+            margin: 18px 0 0;
+            overflow: hidden;
+            border-radius: 20px;
+            background: #10121e;
+            box-shadow: 0 16px 36px rgba(16, 18, 30, 0.22);
+        }
+
+        .wzx_layer {
+            position: absolute;
+            inset: -18%;
+            will-change: transform;
+        }
+
+        .wzx_layer--sky {
+            background:
+                radial-gradient(circle at 30% 28%, rgba(88, 124, 255, 0.55), rgba(88, 124, 255, 0) 55%),
+                radial-gradient(circle at 74% 72%, rgba(214, 96, 40, 0.45), rgba(214, 96, 40, 0) 52%),
+                #111428;
+        }
+
+        .wzx_layer--ring {
+            inset: 0;
+            display: grid;
+            place-items: center;
+        }
+
+        .wzx_layer--ring::before {
+            width: 208px;
+            height: 208px;
+            border: 1px solid rgba(210, 224, 255, 0.42);
+            border-radius: 50%;
+            box-shadow: 0 0 0 26px rgba(160, 190, 255, 0.08), 0 0 0 52px rgba(160, 190, 255, 0.05);
+            content: "";
+        }
+
+        .wzx_layer--title {
+            inset: 0;
+            display: grid;
+            place-items: center;
+            color: #f4f6ff;
+            font-family: "Songti SC", "SimSun", serif;
+            font-size: 30px;
+            letter-spacing: 0.16em;
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+        }
+
+        .wzx_layer--card {
+            inset: auto 26px 26px 26px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 14px;
+            border: 1px solid rgba(226, 234, 255, 0.24);
+            border-radius: 12px;
+            color: #e9eefc;
+            background: rgba(18, 22, 40, 0.72);
+            font-size: 12px;
+            backdrop-filter: blur(6px);
+        }
+
+        .wzx_layer--tag { inset: 18px 20px auto auto; color: rgba(232, 238, 255, 0.72); font-size: 11px; }
+
+        .wzx_readout {
+            display: flex;
+            gap: 16px;
+            margin: 12px 0 0;
+            color: var(--wzx_muted);
+            font-size: 12px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .wzx_readout b { color: var(--wzx_ink); font-weight: 700; }
+
         .wzx_qa {
             margin-top: 20px;
             padding: 14px 16px;
@@ -217,38 +320,71 @@
 <body>
 <div class="wzx_page">
     <header class="wzx_head">
-        <h1>摇一摇 · 今日菜谱</h1>
+        <h1>设备事件 · 摇一摇 / 倾斜视差</h1>
         <span>24002120207 王振旭</span>
     </header>
 
-    <span class="wzx_state wzx_state--wait" id="wzx_state">等待摇动</span>
-
-    <div class="wzx_phone">
-        <div class="wzx_phone-icon" id="wzx_icon">📱</div>
-        <h2>摇一摇手机，抽今日菜谱</h2>
-        <p>连续摇动一次，随机抽一道菜；1.5 秒内只算一次。</p>
+    <div class="wzx_tabs" role="tablist" aria-label="选择演示">
+        <button class="wzx_tab wzx_tab--on" id="wzx_tabShake" type="button" role="tab" aria-selected="true" aria-controls="wzx_panelShake">摇一摇</button>
+        <button class="wzx_tab" id="wzx_tabTilt" type="button" role="tab" aria-selected="false" aria-controls="wzx_panelTilt">倾斜视差</button>
     </div>
 
-    <div class="wzx_result" id="wzx_result">
-        <p class="wzx_result-label">TODAY'S MENU</p>
-        <p class="wzx_result-name" id="wzx_resultName">还没抽</p>
-        <p class="wzx_result-desc" id="wzx_resultDesc">摇一摇，或者点下面的按钮</p>
+    <div>
+        <span class="wzx_state wzx_state--wait" id="wzx_state">等待摇动</span>
     </div>
 
-    <div class="wzx_actions">
-        <button class="wzx_btn wzx_btn--main" id="wzx_permission" type="button" hidden>开启摇一摇权限</button>
-        <button class="wzx_btn" id="wzx_manual" type="button">没有传感器？点我抽一次</button>
-    </div>
+    <section id="wzx_panelShake" role="tabpanel" aria-labelledby="wzx_tabShake">
+        <div class="wzx_phone">
+            <div class="wzx_phone-icon" id="wzx_icon">📱</div>
+            <h2>摇一摇手机，抽今日菜谱</h2>
+            <p>连续摇动一次，随机抽一道菜；1.5 秒内只算一次。</p>
+        </div>
 
-    <p class="wzx_notice" id="wzx_notice" hidden>
-        当前设备不支持或没有传感器数据，请用手机打开；也可以用下面的按钮手动抽取。
-    </p>
+        <div class="wzx_result" id="wzx_result">
+            <p class="wzx_result-label">TODAY'S MENU</p>
+            <p class="wzx_result-name" id="wzx_resultName">还没抽</p>
+            <p class="wzx_result-desc" id="wzx_resultDesc">摇一摇，或者点下面的按钮</p>
+        </div>
+
+        <div class="wzx_actions">
+            <button class="wzx_btn wzx_btn--main" id="wzx_permission" type="button" hidden>开启摇一摇权限</button>
+            <button class="wzx_btn" id="wzx_manual" type="button">没有传感器？点我抽一次</button>
+        </div>
+
+        <p class="wzx_notice" id="wzx_notice" hidden>
+            当前设备不支持或没有传感器数据，请用手机打开；也可以用上面的按钮手动抽取。
+        </p>
+    </section>
+
+    <section id="wzx_panelTilt" role="tabpanel" aria-labelledby="wzx_tabTilt" hidden>
+        <div class="wzx_scene" id="wzx_scene">
+            <div class="wzx_layer wzx_layer--sky" data-wzx-depth="-10"></div>
+            <div class="wzx_layer wzx_layer--ring" data-wzx-depth="-20"></div>
+            <div class="wzx_layer wzx_layer--title" data-wzx-depth="8">倾斜 · 视差</div>
+            <div class="wzx_layer wzx_layer--card" data-wzx-depth="18">
+                <span>左右倾斜看视差</span>
+                <span>β / γ 实时联动</span>
+            </div>
+            <div class="wzx_layer wzx_layer--tag" data-wzx-depth="24">24002120207</div>
+        </div>
+
+        <p class="wzx_readout">β 前后 <b id="wzx_beta">—</b>° · γ 左右 <b id="wzx_gamma">—</b>°</p>
+
+        <div class="wzx_actions">
+            <button class="wzx_btn wzx_btn--main" id="wzx_tiltPermission" type="button" hidden>开启倾斜权限</button>
+        </div>
+
+        <p class="wzx_notice" id="wzx_tiltNotice" hidden>
+            当前设备不支持陀螺仪，或没有收到倾斜数据，请用手机打开；电脑上可以按 F12 打开设备模式再晃动模拟器。
+        </p>
+    </section>
 
     <details class="wzx_qa">
-        <summary>答辩准备：为什么要做降级 / 两个加速度字段的区别</summary>
-        <p><strong>为什么必须降级：</strong>传感器事件在桌面浏览器、部分安卓机、iOS 未授权时都拿不到数据，如果没有降级分支，用户看到的是一片空白，也不知道是代码坏了还是设备不支持。</p>
-        <p><strong>accelerationIncludingGravity：</strong>包含重力加速度，静止时手机平放约为 9.8 m/s²，摇动时数值明显变大，适合做「摇一摇」这类阈值判断。</p>
-        <p><strong>acceleration：</strong>已由系统去掉重力影响，静止时接近 0，更适合判断纯运动或计步；但并非所有设备都提供该字段。</p>
+        <summary>答辩准备：降级原因 / 两个加速度字段 / 视差怎么算</summary>
+        <p><strong>为什么必须降级：</strong>传感器事件在桌面浏览器、部分安卓机、iOS 未授权时都拿不到数据，没有降级分支就是空白页，用户分不清是设备不支持还是代码坏了。</p>
+        <p><strong>accelerationIncludingGravity：</strong>包含重力加速度，静止平放约 9.8 m/s²，摇动时数值明显变大，适合摇一摇这类阈值判断。</p>
+        <p><strong>acceleration：</strong>已去掉重力影响，静止时接近 0，适合判断纯运动或计步，但并非所有设备都提供。</p>
+        <p><strong>倾斜视差：</strong>读 <code>beta</code>（前后，−180～180）与 <code>gamma</code>（左右，−90～90），先限制到 ±25° 避免翻页时乱跳，再按每层 <code>depth</code> 换算位移——层越靠前位移越大，背景用负值反向移动，就有了纵深感。</p>
     </details>
 </div>
 
@@ -263,16 +399,23 @@
     { name: "潮汕牛肉火锅", desc: "吊龙、匙柄现切现涮。" }
   ];
 
-  // 摇动阈值与冷却时间
+  // 摇动阈值、冷却时间与等待传感器数据的最长时间
   const wzx_shakeThreshold = 18;
   const wzx_cooldownMs = 1500;
-  // 等待传感器数据的最长时间，超过则走降级
   const wzx_waitMs = 3000;
+  // 倾斜量的映射范围：超过 ±25° 就按边界处理
+  const wzx_tiltRange = 25;
 
   let wzx_lastShakeTime = 0;
   let wzx_gotMotion = false;
-  let wzx_listening = false;
+  let wzx_gotTilt = false;
+  let wzx_shakeStarted = false;
+  let wzx_tiltStarted = false;
   let wzx_waitTimer = null;
+  let wzx_tiltTimer = null;
+  let wzx_tiltRaf = 0;
+  let wzx_beta = 0;
+  let wzx_gamma = 0;
 
   // 功能：设置顶部状态胶囊的文字与状态色
   function wzx_setState(wzx_text, wzx_type) {
@@ -280,6 +423,8 @@
     wzx_state.textContent = wzx_text;
     wzx_state.className = "wzx_state wzx_state--" + wzx_type;
   }
+
+  /* ---------------- 摇一摇 ---------------- */
 
   // 功能：随机抽取一道菜并带弹出动画显示
   function wzx_pickDish() {
@@ -296,7 +441,7 @@
     wzx_icon.classList.add("wzx_phone-icon--shake");
   }
 
-  // 功能：显示不支持提示并保留手动抽取按钮
+  // 功能：显示摇一摇不可用的提示，并保留手动抽取按钮
   function wzx_showFallback() {
     document.getElementById("wzx_notice").hidden = false;
     wzx_setState("无传感器 · 用按钮", "off");
@@ -330,12 +475,8 @@
     wzx_setState("已摇动 · 冷却 1.5 秒", "ok");
   }
 
-  // 功能：开始监听 devicemotion，并启动「一直没有数据就降级」的计时器
+  // 功能：开始监听 devicemotion，并在一段时间没有数据时降级
   function wzx_startListening() {
-    if (wzx_listening) {
-      return;
-    }
-    wzx_listening = true;
     window.addEventListener("devicemotion", wzx_onMotion);
     wzx_setState("等待摇动", "wait");
 
@@ -346,7 +487,7 @@
     }, wzx_waitMs);
   }
 
-  // 功能：处理 iOS 13+ 的权限按钮，授权后开始监听
+  // 功能：处理 iOS 13+ 的摇一摇权限按钮
   function wzx_requestPermission() {
     const wzx_button = document.getElementById("wzx_permission");
     wzx_button.disabled = true;
@@ -368,22 +509,24 @@
       });
   }
 
-  // 功能：初始化设备能力检测、绑定按钮，并决定是否直接监听
-  function wzx_init() {
-    const wzx_supported = typeof window.DeviceMotionEvent !== "undefined";
+  // 功能：初始化摇一摇，检测设备能力并决定直接监听还是先申请权限
+  function wzx_initShake() {
+    if (wzx_shakeStarted) {
+      return;
+    }
+    wzx_shakeStarted = true;
 
     document.getElementById("wzx_manual").addEventListener("click", function () {
       wzx_pickDish();
       wzx_setState("手动抽取", "ok");
     });
 
-    if (!wzx_supported) {
+    if (typeof window.DeviceMotionEvent === "undefined") {
       wzx_showFallback();
       return;
     }
 
-    const wzx_needsPermission = typeof DeviceMotionEvent.requestPermission === "function";
-    if (wzx_needsPermission) {
+    if (typeof DeviceMotionEvent.requestPermission === "function") {
       const wzx_button = document.getElementById("wzx_permission");
       wzx_button.hidden = false;
       wzx_button.addEventListener("click", wzx_requestPermission);
@@ -392,6 +535,144 @@
     }
 
     wzx_startListening();
+  }
+
+  /* ---------------- 倾斜视差 ---------------- */
+
+  // 功能：把倾角换算成每层的位移，层越靠前动得越多
+  function wzx_applyTilt() {
+    wzx_tiltRaf = 0;
+    document.getElementById("wzx_beta").textContent = wzx_beta.toFixed(1);
+    document.getElementById("wzx_gamma").textContent = wzx_gamma.toFixed(1);
+
+    const wzx_x = Math.max(-1, Math.min(1, wzx_gamma / wzx_tiltRange));
+    const wzx_y = Math.max(-1, Math.min(1, wzx_beta / wzx_tiltRange));
+
+    document.querySelectorAll("#wzx_scene [data-wzx-depth]").forEach(function (wzx_layer) {
+      const wzx_depth = Number(wzx_layer.getAttribute("data-wzx-depth"));
+      wzx_layer.style.transform = "translate3d(" + (wzx_x * wzx_depth).toFixed(2) + "px," +
+        (wzx_y * wzx_depth).toFixed(2) + "px,0)";
+    });
+  }
+
+  // 功能：处理陀螺仪事件，更新倾角并用 requestAnimationFrame 合并渲染
+  function wzx_onOrientation(wzx_event) {
+    if (wzx_event.beta === null && wzx_event.gamma === null) {
+      return;
+    }
+
+    if (!wzx_gotTilt) {
+      wzx_gotTilt = true;
+      clearTimeout(wzx_tiltTimer);
+      document.getElementById("wzx_tiltNotice").hidden = true;
+      wzx_setState("已连接陀螺仪", "ok");
+    }
+
+    wzx_beta = wzx_event.beta || 0;
+    wzx_gamma = wzx_event.gamma || 0;
+
+    if (!wzx_tiltRaf) {
+      wzx_tiltRaf = requestAnimationFrame(wzx_applyTilt);
+    }
+  }
+
+  // 功能：开始监听 deviceorientation，并在一段时间没有数据时给出提示
+  function wzx_startTilt() {
+    window.addEventListener("deviceorientation", wzx_onOrientation);
+    wzx_setState("等待陀螺仪", "wait");
+
+    wzx_tiltTimer = setTimeout(function () {
+      if (!wzx_gotTilt) {
+        document.getElementById("wzx_tiltNotice").hidden = false;
+        wzx_setState("无陀螺仪数据", "off");
+      }
+    }, wzx_waitMs);
+  }
+
+  // 功能：处理 iOS 13+ 的陀螺仪权限按钮
+  function wzx_requestTiltPermission() {
+    const wzx_button = document.getElementById("wzx_tiltPermission");
+    wzx_button.disabled = true;
+
+    DeviceOrientationEvent.requestPermission()
+      .then(function (wzx_result) {
+        if (wzx_result === "granted") {
+          wzx_button.hidden = true;
+          wzx_startTilt();
+        } else {
+          document.getElementById("wzx_tiltNotice").hidden = false;
+          wzx_setState("权限被拒绝", "off");
+        }
+      })
+      .catch(function (wzx_error) {
+        console.error("倾斜权限申请失败：", wzx_error);
+        document.getElementById("wzx_tiltNotice").hidden = false;
+        wzx_setState("权限不可用", "off");
+      });
+  }
+
+  // 功能：初始化倾斜视差，检测设备能力并决定监听方式
+  function wzx_initTilt() {
+    if (wzx_tiltStarted) {
+      return;
+    }
+    wzx_tiltStarted = true;
+
+    if (typeof window.DeviceOrientationEvent === "undefined") {
+      document.getElementById("wzx_tiltNotice").hidden = false;
+      wzx_setState("无陀螺仪 · 不支持", "off");
+      return;
+    }
+
+    if (typeof DeviceOrientationEvent.requestPermission === "function") {
+      const wzx_button = document.getElementById("wzx_tiltPermission");
+      wzx_button.hidden = false;
+      wzx_button.addEventListener("click", wzx_requestTiltPermission);
+      wzx_setState("需要授权", "wait");
+      return;
+    }
+
+    wzx_startTilt();
+  }
+
+  /* ---------------- 切换 ---------------- */
+
+  // 功能：切换两个演示面板，并首次进入时初始化对应能力
+  function wzx_switchMode(wzx_mode) {
+    const wzx_isShake = wzx_mode === "shake";
+    const wzx_tabShake = document.getElementById("wzx_tabShake");
+    const wzx_tabTilt = document.getElementById("wzx_tabTilt");
+
+    wzx_tabShake.classList.toggle("wzx_tab--on", wzx_isShake);
+    wzx_tabTilt.classList.toggle("wzx_tab--on", !wzx_isShake);
+    wzx_tabShake.setAttribute("aria-selected", wzx_isShake ? "true" : "false");
+    wzx_tabTilt.setAttribute("aria-selected", wzx_isShake ? "false" : "true");
+    document.getElementById("wzx_panelShake").hidden = !wzx_isShake;
+    document.getElementById("wzx_panelTilt").hidden = wzx_isShake;
+
+    if (wzx_isShake) {
+      wzx_initShake();
+      if (wzx_gotMotion) {
+        wzx_setState("已连接传感器", "ok");
+      }
+    } else {
+      wzx_initTilt();
+      if (wzx_gotTilt) {
+        wzx_setState("已连接陀螺仪", "ok");
+      }
+    }
+  }
+
+  // 功能：绑定标签按钮并默认打开摇一摇
+  function wzx_init() {
+    document.getElementById("wzx_tabShake").addEventListener("click", function () {
+      wzx_switchMode("shake");
+    });
+    document.getElementById("wzx_tabTilt").addEventListener("click", function () {
+      wzx_switchMode("tilt");
+    });
+
+    wzx_initShake();
   }
 
   wzx_init();
