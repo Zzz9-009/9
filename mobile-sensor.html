@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<!--
+  作者：王振旭（24002120207）
+  建立时间：2026-11-18
+  使用大模型：DeepSeek-V4.1-Flash
+  功能名称：摇一摇抽今日菜谱，含 1.5 秒冷却、iOS 权限申请与无传感器降级
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="移动端设备事件练习：摇一摇抽取今日菜谱，支持权限申请与降级">
+    <title>摇一摇 · 今日菜谱</title>
+    <style>
+        :root {
+            --wzx_ink: #1a1712;
+            --wzx_muted: #7c7466;
+            --wzx_paper: #faf6ee;
+            --wzx_line: #e6ddcc;
+            --wzx_accent: #c4551f;
+            --wzx_ok: #2f6b4f;
+            --wzx_warn: #a4601c;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-width: 320px;
+            margin: 0;
+            color: var(--wzx_ink);
+            background:
+                radial-gradient(circle at 82% -8%, rgba(196, 85, 31, 0.12), rgba(196, 85, 31, 0) 46%),
+                var(--wzx_paper);
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            line-height: 1.65;
+        }
+
+        .wzx_page {
+            width: min(520px, calc(100% - 28px));
+            margin: 0 auto;
+            padding: 26px 0 46px;
+        }
+
+        .wzx_head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--wzx_line);
+        }
+
+        .wzx_head h1 {
+            margin: 0;
+            font-family: "Songti SC", "SimSun", serif;
+            font-size: 22px;
+            font-weight: 400;
+        }
+
+        .wzx_head span { color: var(--wzx_muted); font-size: 12px; }
+
+        .wzx_state {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 18px 0 0;
+            padding: 4px 11px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .wzx_state::before {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            content: "";
+        }
+
+        .wzx_state--wait { color: var(--wzx_warn); background: #f7ecd9; }
+        .wzx_state--ok { color: var(--wzx_ok); background: #e3f0e7; }
+        .wzx_state--off { color: #8d8377; background: #ece6da; }
+
+        .wzx_phone {
+            position: relative;
+            margin: 20px 0 0;
+            padding: 34px 22px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 22px;
+            background: #fffdf8;
+            text-align: center;
+            box-shadow: 0 16px 36px rgba(26, 23, 18, 0.07);
+        }
+
+        .wzx_phone-icon {
+            display: grid;
+            width: 74px;
+            height: 74px;
+            margin: 0 auto 14px;
+            place-items: center;
+            border-radius: 22px;
+            color: #fff;
+            background: linear-gradient(145deg, #d96a2c, #a8400f);
+            font-size: 32px;
+        }
+
+        .wzx_phone-icon--shake { animation: wzx_shake 520ms ease; }
+
+        @keyframes wzx_shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-14deg); }
+            50% { transform: rotate(12deg); }
+            75% { transform: rotate(-8deg); }
+        }
+
+        .wzx_phone h2 { margin: 0 0 6px; font-size: 17px; }
+        .wzx_phone p { margin: 0; color: var(--wzx_muted); font-size: 13px; }
+
+        .wzx_result {
+            margin: 20px 0 0;
+            padding: 20px;
+            border: 1px dashed var(--wzx_line);
+            border-radius: 16px;
+            background: #fff;
+            text-align: center;
+        }
+
+        .wzx_result-label {
+            margin: 0 0 6px;
+            color: var(--wzx_muted);
+            font-size: 11.5px;
+            letter-spacing: 0.18em;
+        }
+
+        .wzx_result-name {
+            margin: 0;
+            font-family: "Songti SC", "SimSun", serif;
+            font-size: 30px;
+            font-weight: 400;
+            letter-spacing: 0.04em;
+        }
+
+        .wzx_result-desc { margin: 6px 0 0; color: var(--wzx_muted); font-size: 13px; }
+
+        .wzx_result--pop { animation: wzx_pop 360ms cubic-bezier(0.2, 0.9, 0.3, 1.3); }
+
+        @keyframes wzx_pop {
+            0% { transform: scale(0.88); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .wzx_actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 18px 0 0;
+        }
+
+        .wzx_btn {
+            flex: 1 1 150px;
+            min-height: 44px;
+            padding: 0 16px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 10px;
+            color: var(--wzx_ink);
+            background: #fffdf8;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: border-color 160ms ease, color 160ms ease;
+        }
+
+        .wzx_btn--main {
+            color: #fff;
+            border-color: var(--wzx_accent);
+            background: var(--wzx_accent);
+        }
+
+        .wzx_btn:hover { border-color: var(--wzx_accent); color: var(--wzx_accent); }
+        .wzx_btn--main:hover { color: #fff; background: #a9441a; }
+        .wzx_btn:focus-visible { outline: 2px solid var(--wzx_accent); outline-offset: 2px; }
+        .wzx_btn[hidden] { display: none; }
+
+        .wzx_notice {
+            margin: 14px 0 0;
+            padding: 12px 14px;
+            border-left: 3px solid var(--wzx_warn);
+            background: #fdf4e5;
+            color: #6c5429;
+            font-size: 12.5px;
+        }
+
+        .wzx_notice[hidden] { display: none; }
+
+        .wzx_qa {
+            margin-top: 20px;
+            padding: 14px 16px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 12px;
+            background: #fffdf8;
+            font-size: 12.5px;
+        }
+
+        .wzx_qa summary { color: var(--wzx_accent); font-weight: 700; cursor: pointer; }
+        .wzx_qa p { margin: 9px 0 0; color: #4d463b; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .wzx_phone-icon--shake, .wzx_result--pop { animation: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="wzx_page">
+    <header class="wzx_head">
+        <h1>摇一摇 · 今日菜谱</h1>
+        <span>24002120207 王振旭</span>
+    </header>
+
+    <span class="wzx_state wzx_state--wait" id="wzx_state">等待摇动</span>
+
+    <div class="wzx_phone">
+        <div class="wzx_phone-icon" id="wzx_icon">📱</div>
+        <h2>摇一摇手机，抽今日菜谱</h2>
+        <p>连续摇动一次，随机抽一道菜；1.5 秒内只算一次。</p>
+    </div>
+
+    <div class="wzx_result" id="wzx_result">
+        <p class="wzx_result-label">TODAY'S MENU</p>
+        <p class="wzx_result-name" id="wzx_resultName">还没抽</p>
+        <p class="wzx_result-desc" id="wzx_resultDesc">摇一摇，或者点下面的按钮</p>
+    </div>
+
+    <div class="wzx_actions">
+        <button class="wzx_btn wzx_btn--main" id="wzx_permission" type="button" hidden>开启摇一摇权限</button>
+        <button class="wzx_btn" id="wzx_manual" type="button">没有传感器？点我抽一次</button>
+    </div>
+
+    <p class="wzx_notice" id="wzx_notice" hidden>
+        当前设备不支持或没有传感器数据，请用手机打开；也可以用下面的按钮手动抽取。
+    </p>
+
+    <details class="wzx_qa">
+        <summary>答辩准备：为什么要做降级 / 两个加速度字段的区别</summary>
+        <p><strong>为什么必须降级：</strong>传感器事件在桌面浏览器、部分安卓机、iOS 未授权时都拿不到数据，如果没有降级分支，用户看到的是一片空白，也不知道是代码坏了还是设备不支持。</p>
+        <p><strong>accelerationIncludingGravity：</strong>包含重力加速度，静止时手机平放约为 9.8 m/s²，摇动时数值明显变大，适合做「摇一摇」这类阈值判断。</p>
+        <p><strong>acceleration：</strong>已由系统去掉重力影响，静止时接近 0，更适合判断纯运动或计步；但并非所有设备都提供该字段。</p>
+    </details>
+</div>
+
+<script>
+  // 可抽取的菜谱数据
+  const wzx_menu = [
+    { name: "北京烤鸭", desc: "片皮卷饼，配葱丝与甜面酱。" },
+    { name: "兰州牛肉面", desc: "一清二白三红四绿五黄。" },
+    { name: "广式早茶", desc: "虾饺、烧卖、凤爪配一壶普洱。" },
+    { name: "重庆小面", desc: "麻辣鲜香，二两小面配豌杂。" },
+    { name: "西安肉夹馍", desc: "腊汁肉配白吉馍，外酥里软。" },
+    { name: "潮汕牛肉火锅", desc: "吊龙、匙柄现切现涮。" }
+  ];
+
+  // 摇动阈值与冷却时间
+  const wzx_shakeThreshold = 18;
+  const wzx_cooldownMs = 1500;
+  // 等待传感器数据的最长时间，超过则走降级
+  const wzx_waitMs = 3000;
+
+  let wzx_lastShakeTime = 0;
+  let wzx_gotMotion = false;
+  let wzx_listening = false;
+  let wzx_waitTimer = null;
+
+  // 功能：设置顶部状态胶囊的文字与状态色
+  function wzx_setState(wzx_text, wzx_type) {
+    const wzx_state = document.getElementById("wzx_state");
+    wzx_state.textContent = wzx_text;
+    wzx_state.className = "wzx_state wzx_state--" + wzx_type;
+  }
+
+  // 功能：随机抽取一道菜并带弹出动画显示
+  function wzx_pickDish() {
+    const wzx_dish = wzx_menu[Math.floor(Math.random() * wzx_menu.length)];
+    const wzx_result = document.getElementById("wzx_result");
+    document.getElementById("wzx_resultName").textContent = wzx_dish.name;
+    document.getElementById("wzx_resultDesc").textContent = wzx_dish.desc;
+
+    const wzx_icon = document.getElementById("wzx_icon");
+    wzx_result.classList.remove("wzx_result--pop");
+    wzx_icon.classList.remove("wzx_phone-icon--shake");
+    void wzx_result.offsetWidth;
+    wzx_result.classList.add("wzx_result--pop");
+    wzx_icon.classList.add("wzx_phone-icon--shake");
+  }
+
+  // 功能：显示不支持提示并保留手动抽取按钮
+  function wzx_showFallback() {
+    document.getElementById("wzx_notice").hidden = false;
+    wzx_setState("无传感器 · 用按钮", "off");
+  }
+
+  // 功能：处理设备运动事件，按合成加速度判断是否摇动，并做冷却
+  function wzx_onMotion(wzx_event) {
+    const wzx_acc = wzx_event.accelerationIncludingGravity;
+    if (!wzx_acc || wzx_acc.x === null) {
+      return;
+    }
+
+    if (!wzx_gotMotion) {
+      wzx_gotMotion = true;
+      clearTimeout(wzx_waitTimer);
+      document.getElementById("wzx_notice").hidden = true;
+      wzx_setState("已连接传感器", "ok");
+    }
+
+    const wzx_magnitude = Math.sqrt(wzx_acc.x * wzx_acc.x + wzx_acc.y * wzx_acc.y + wzx_acc.z * wzx_acc.z);
+    if (wzx_magnitude < wzx_shakeThreshold) {
+      return;
+    }
+
+    const wzx_now = Date.now();
+    if (wzx_now - wzx_lastShakeTime < wzx_cooldownMs) {
+      return;
+    }
+    wzx_lastShakeTime = wzx_now;
+    wzx_pickDish();
+    wzx_setState("已摇动 · 冷却 1.5 秒", "ok");
+  }
+
+  // 功能：开始监听 devicemotion，并启动「一直没有数据就降级」的计时器
+  function wzx_startListening() {
+    if (wzx_listening) {
+      return;
+    }
+    wzx_listening = true;
+    window.addEventListener("devicemotion", wzx_onMotion);
+    wzx_setState("等待摇动", "wait");
+
+    wzx_waitTimer = setTimeout(function () {
+      if (!wzx_gotMotion) {
+        wzx_showFallback();
+      }
+    }, wzx_waitMs);
+  }
+
+  // 功能：处理 iOS 13+ 的权限按钮，授权后开始监听
+  function wzx_requestPermission() {
+    const wzx_button = document.getElementById("wzx_permission");
+    wzx_button.disabled = true;
+
+    DeviceMotionEvent.requestPermission()
+      .then(function (wzx_result) {
+        if (wzx_result === "granted") {
+          wzx_button.hidden = true;
+          wzx_startListening();
+        } else {
+          wzx_setState("权限被拒绝", "off");
+          wzx_showFallback();
+        }
+      })
+      .catch(function (wzx_error) {
+        console.error("权限申请失败：", wzx_error);
+        wzx_setState("权限不可用", "off");
+        wzx_showFallback();
+      });
+  }
+
+  // 功能：初始化设备能力检测、绑定按钮，并决定是否直接监听
+  function wzx_init() {
+    const wzx_supported = typeof window.DeviceMotionEvent !== "undefined";
+
+    document.getElementById("wzx_manual").addEventListener("click", function () {
+      wzx_pickDish();
+      wzx_setState("手动抽取", "ok");
+    });
+
+    if (!wzx_supported) {
+      wzx_showFallback();
+      return;
+    }
+
+    const wzx_needsPermission = typeof DeviceMotionEvent.requestPermission === "function";
+    if (wzx_needsPermission) {
+      const wzx_button = document.getElementById("wzx_permission");
+      wzx_button.hidden = false;
+      wzx_button.addEventListener("click", wzx_requestPermission);
+      wzx_setState("需要授权", "wait");
+      return;
+    }
+
+    wzx_startListening();
+  }
+
+  wzx_init();
+</script>
+</body>
+</html>

@@ -412,3 +412,17 @@ T5 通过
 ```
 
 - **处理结果**：`db.json` 改为 4 首基础诗词并新增 2 首（共 6 首，均来自唐诗，带 author / dynasty 字段）；`server.js` 新增 `/api/authors`；`poems.html` 改为 `Promise.all` 并发取两份数据，新增作者标签、关键字搜索、标题长度排序与失败提示；截图联动静态服务实测错误分支正常。
+
+---
+
+## 记录 29
+
+- **时间**：2026-11-18
+- **模型**：DeepSeek-V4.1-Flash
+- **提示词原文**：
+
+```
+https://spontaneous-valkyrie-4e4229.netlify.app/mobile-events-lesson 浏览这个网页 并且完成下面的实践任务
+```
+
+- **处理结果**：抓取课程页并完成 4 个任务：`mobile-gesture.html`（滑动卡片）、`mobile-zoom.html`（双指缩放查看器）、`mobile-sensor.html`（摇一摇 + 降级），任务一用真实触摸事件在课程页探针区实测并记录到 `mobile-events-record.md`；三个页面用 CDP 触摸模拟跑通 23 项断言，截图存入 `shots/`；首页新增「08 · 移动端触摸事件」入口。模板前缀 `wy_` 按用户命名规则统一改为 `wzx_`。

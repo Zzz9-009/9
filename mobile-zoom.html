@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<!--
+  作者：王振旭（24002120207）
+  建立时间：2026-11-18
+  使用大模型：DeepSeek-V4.1-Flash
+  功能名称：移动端图片查看器，双指缩放 1x-4x、双击放大、放大后单指拖动
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="移动端图片查看器：双指缩放、双击放大、单指拖动">
+    <title>图片查看器 · 双指缩放</title>
+    <style>
+        :root {
+            --wzx_ink: #14161a;
+            --wzx_muted: #7d838d;
+            --wzx_paper: #f4f5f7;
+            --wzx_line: #e0e3e8;
+            --wzx_accent: #3458d3;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-width: 320px;
+            margin: 0;
+            color: var(--wzx_ink);
+            background: var(--wzx_paper);
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            line-height: 1.65;
+        }
+
+        .wzx_page {
+            width: min(560px, calc(100% - 28px));
+            margin: 0 auto;
+            padding: 24px 0 44px;
+        }
+
+        .wzx_head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--wzx_line);
+        }
+
+        .wzx_head h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        .wzx_head span { color: var(--wzx_muted); font-size: 12px; }
+
+        .wzx_viewer {
+            position: relative;
+            margin: 18px 0 0;
+            overflow: hidden;
+            border-radius: 14px;
+            background: #101216;
+            aspect-ratio: 4 / 3;
+            /* 手势全部交给这里，浏览器不要接管滚动与缩放 */
+            touch-action: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .wzx_image {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform-origin: 0 0;
+            will-change: transform;
+        }
+
+        .wzx_image--anim { transition: transform 250ms ease; }
+
+        .wzx_badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 3px 9px;
+            border-radius: 999px;
+            color: #fff;
+            background: rgba(10, 12, 16, 0.62);
+            font-size: 11.5px;
+            font-variant-numeric: tabular-nums;
+            pointer-events: none;
+        }
+
+        .wzx_hint {
+            position: absolute;
+            left: 12px;
+            bottom: 12px;
+            padding: 5px 11px;
+            border-radius: 8px;
+            color: #eef1f6;
+            background: rgba(10, 12, 16, 0.56);
+            font-size: 11.5px;
+            pointer-events: none;
+            transition: opacity 200ms ease;
+        }
+
+        .wzx_hint--hide { opacity: 0; }
+
+        .wzx_meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .wzx_meta p { margin: 0; color: var(--wzx_muted); font-size: 12.5px; }
+
+        .wzx_reset {
+            min-height: 38px;
+            padding: 0 14px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 9px;
+            color: var(--wzx_ink);
+            background: #fff;
+            font: inherit;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .wzx_reset:focus-visible { outline: 2px solid var(--wzx_accent); outline-offset: 2px; }
+
+        .wzx_qa {
+            margin-top: 18px;
+            padding: 14px 16px;
+            border: 1px solid var(--wzx_line);
+            border-radius: 12px;
+            background: #fff;
+            font-size: 13px;
+        }
+
+        .wzx_qa summary { color: var(--wzx_accent); font-weight: 700; cursor: pointer; }
+        .wzx_qa p { margin: 10px 0 0; color: #4a4f58; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .wzx_image--anim { transition: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="wzx_page">
+    <header class="wzx_head">
+        <h1>图片查看器</h1>
+        <span>24002120207 王振旭</span>
+    </header>
+
+    <div class="wzx_viewer" id="wzx_viewer">
+        <img class="wzx_image" id="wzx_image" src="./assets/exhibition/01-light-dome.jpg" alt="光影展品：光之穹顶">
+        <span class="wzx_badge" id="wzx_scaleBadge">×1.00</span>
+        <span class="wzx_hint" id="wzx_hint">双指缩放请用手机打开</span>
+    </div>
+
+    <div class="wzx_meta">
+        <p>双指缩放 1x～4x，双击在 1x 与 2x 之间切换，放大后可单指拖动。</p>
+        <button class="wzx_reset" id="wzx_reset" type="button">复位</button>
+    </div>
+
+    <details class="wzx_qa">
+        <summary>答辩准备：怎么保证「缩放不跳」</summary>
+        <p>缩放时不用「上一帧比例」累乘，而是以 <code>touchstart</code> 时的两指距离与缩放倍数为基准：每次 <code>touchmove</code> 都算 <code>当前距离 ÷ 起始距离</code>，再乘起始倍数，误差不会累积。</p>
+        <p>位移则用同一个锚点公式 <code>t = m₁ − (s/s₀)(m₀ − t₀)</code>：m₀ 是起始两指中点，m₁ 是当前中点。这样两指之间的那个像素始终停在中点下方，图片不会在手指之间乱窜；缩放到 1x 时再把位移清零并限制边界。</p>
+    </details>
+</div>
+
+<script>
+  // 缩放范围与双击目标倍数
+  const wzx_minScale = 1;
+  const wzx_maxScale = 4;
+  const wzx_doubleScale = 2;
+
+  // 当前变换状态：倍数与位移
+  let wzx_scale = 1;
+  let wzx_tx = 0;
+  let wzx_ty = 0;
+
+  // 手势过程状态
+  let wzx_mode = "none";
+  let wzx_pinch = null;
+  let wzx_drag = null;
+  let wzx_tapStart = null;
+  let wzx_tapMoved = false;
+  let wzx_lastTapTime = 0;
+  let wzx_animTimer = null;
+
+  // 功能：计算两根手指之间的直线距离
+  function wzx_distance(wzx_a, wzx_b) {
+    return Math.hypot(wzx_b.clientX - wzx_a.clientX, wzx_b.clientY - wzx_a.clientY);
+  }
+
+  // 功能：把当前倍数与位移写入图片样式，并同步倍率角标
+  function wzx_apply(wzx_animate) {
+    const wzx_image = document.getElementById("wzx_image");
+    if (wzx_animate) {
+      wzx_image.classList.add("wzx_image--anim");
+      clearTimeout(wzx_animTimer);
+      wzx_animTimer = setTimeout(function () {
+        wzx_image.classList.remove("wzx_image--anim");
+      }, 260);
+    } else {
+      wzx_image.classList.remove("wzx_image--anim");
+    }
+    wzx_image.style.transform = "translate(" + wzx_tx + "px," + wzx_ty + "px) scale(" + wzx_scale + ")";
+    document.getElementById("wzx_scaleBadge").textContent = "×" + wzx_scale.toFixed(2);
+    document.getElementById("wzx_hint").classList.toggle("wzx_hint--hide", wzx_scale > 1.01);
+  }
+
+  // 功能：把位移限制在图片边界内，1x 时自动回到居中
+  function wzx_clamp() {
+    const wzx_rect = document.getElementById("wzx_viewer").getBoundingClientRect();
+
+    if (wzx_scale <= 1.001) {
+      wzx_scale = 1;
+      wzx_tx = 0;
+      wzx_ty = 0;
+      return;
+    }
+
+    const wzx_width = wzx_rect.width * wzx_scale;
+    const wzx_height = wzx_rect.height * wzx_scale;
+    const wzx_minX = Math.min(0, wzx_rect.width - wzx_width);
+    const wzx_minY = Math.min(0, wzx_rect.height - wzx_height);
+
+    wzx_tx = Math.max(wzx_minX, Math.min(0, wzx_tx));
+    wzx_ty = Math.max(wzx_minY, Math.min(0, wzx_ty));
+  }
+
+  // 功能：触摸开始，区分单指拖动与双指缩放的初始状态
+  function wzx_onTouchStart(wzx_event) {
+    wzx_tapMoved = false;
+
+    if (wzx_event.touches.length >= 2) {
+      const wzx_rect = document.getElementById("wzx_viewer").getBoundingClientRect();
+      const wzx_t0 = wzx_event.touches[0];
+      const wzx_t1 = wzx_event.touches[1];
+      wzx_mode = "pinch";
+      wzx_pinch = {
+        dist: wzx_distance(wzx_t0, wzx_t1),
+        midX: (wzx_t0.clientX + wzx_t1.clientX) / 2 - wzx_rect.left,
+        midY: (wzx_t0.clientY + wzx_t1.clientY) / 2 - wzx_rect.top,
+        scale: wzx_scale,
+        tx: wzx_tx,
+        ty: wzx_ty
+      };
+      return;
+    }
+
+    const wzx_touch = wzx_event.touches[0];
+    wzx_tapStart = { x: wzx_touch.clientX, y: wzx_touch.clientY };
+
+    if (wzx_scale > 1.001) {
+      wzx_mode = "drag";
+      wzx_drag = { x: wzx_touch.clientX, y: wzx_touch.clientY, tx: wzx_tx, ty: wzx_ty };
+    } else {
+      wzx_mode = "tap";
+      wzx_drag = null;
+    }
+  }
+
+  // 功能：触摸移动，双指按距离比例缩放并以两指中点为基准，单指放大后拖动
+  function wzx_onTouchMove(wzx_event) {
+    if (wzx_mode === "pinch" && wzx_event.touches.length >= 2 && wzx_pinch) {
+      wzx_event.preventDefault();
+
+      const wzx_rect = document.getElementById("wzx_viewer").getBoundingClientRect();
+      const wzx_t0 = wzx_event.touches[0];
+      const wzx_t1 = wzx_event.touches[1];
+      const wzx_dist = wzx_distance(wzx_t0, wzx_t1);
+      const wzx_midX = (wzx_t0.clientX + wzx_t1.clientX) / 2 - wzx_rect.left;
+      const wzx_midY = (wzx_t0.clientY + wzx_t1.clientY) / 2 - wzx_rect.top;
+
+      let wzx_next = wzx_pinch.scale * (wzx_dist / wzx_pinch.dist);
+      wzx_next = Math.max(wzx_minScale, Math.min(wzx_maxScale, wzx_next));
+
+      const wzx_ratio = wzx_next / wzx_pinch.scale;
+      wzx_scale = wzx_next;
+      wzx_tx = wzx_midX - wzx_ratio * (wzx_pinch.midX - wzx_pinch.tx);
+      wzx_ty = wzx_midY - wzx_ratio * (wzx_pinch.midY - wzx_pinch.ty);
+      wzx_apply(false);
+      return;
+    }
+
+    if (wzx_mode === "drag" && wzx_drag && wzx_event.touches.length === 1) {
+      wzx_event.preventDefault();
+      const wzx_touch = wzx_event.touches[0];
+      wzx_tx = wzx_drag.tx + (wzx_touch.clientX - wzx_drag.x);
+      wzx_ty = wzx_drag.ty + (wzx_touch.clientY - wzx_drag.y);
+      wzx_apply(false);
+      if (Math.abs(wzx_touch.clientX - wzx_drag.x) > 8 || Math.abs(wzx_touch.clientY - wzx_drag.y) > 8) {
+        wzx_tapMoved = true;
+      }
+      return;
+    }
+
+    if (wzx_mode === "tap" && wzx_event.touches.length === 1) {
+      const wzx_touch = wzx_event.touches[0];
+      if (Math.abs(wzx_touch.clientX - wzx_tapStart.x) > 8 || Math.abs(wzx_touch.clientY - wzx_tapStart.y) > 8) {
+        wzx_tapMoved = true;
+      }
+    }
+  }
+
+  // 功能：触摸结束，收尾拖动边界并处理双击放大与复位
+  function wzx_onTouchEnd(wzx_event) {
+    if (wzx_mode === "pinch") {
+      if (wzx_event.touches.length === 0) {
+        wzx_mode = "none";
+        wzx_pinch = null;
+        wzx_clamp();
+        wzx_apply(false);
+      }
+      return;
+    }
+
+    if (wzx_mode === "drag") {
+      if (wzx_event.touches.length === 0) {
+        wzx_mode = "none";
+        wzx_drag = null;
+
+        // 放大状态下原地轻点两次同样算双击，用于快速回到 1x
+        if (!wzx_tapMoved && wzx_event.changedTouches.length) {
+          const wzx_now = Date.now();
+          if (wzx_now - wzx_lastTapTime < 300) {
+            wzx_lastTapTime = 0;
+            wzx_toggleZoom(wzx_event.changedTouches[0]);
+            return;
+          }
+          wzx_lastTapTime = wzx_now;
+        } else {
+          wzx_lastTapTime = 0;
+        }
+
+        wzx_clamp();
+        wzx_apply(false);
+      }
+      return;
+    }
+
+    if (wzx_mode === "tap" && wzx_event.touches.length === 0) {
+      wzx_mode = "none";
+      if (wzx_tapMoved || !wzx_event.changedTouches.length) {
+        wzx_lastTapTime = 0;
+        return;
+      }
+
+      const wzx_now = Date.now();
+      if (wzx_now - wzx_lastTapTime < 300) {
+        wzx_lastTapTime = 0;
+        wzx_toggleZoom(wzx_event.changedTouches[0]);
+      } else {
+        wzx_lastTapTime = wzx_now;
+      }
+    }
+  }
+
+  // 功能：双击在 1x 与 2x 之间切换，并以点击位置为缩放基准
+  function wzx_toggleZoom(wzx_touch) {
+    const wzx_rect = document.getElementById("wzx_viewer").getBoundingClientRect();
+
+    if (wzx_scale > 1.05) {
+      wzx_scale = 1;
+      wzx_tx = 0;
+      wzx_ty = 0;
+    } else {
+      const wzx_px = wzx_touch.clientX - wzx_rect.left;
+      const wzx_py = wzx_touch.clientY - wzx_rect.top;
+      const wzx_ratio = wzx_doubleScale / wzx_scale;
+      wzx_tx = wzx_px - wzx_ratio * (wzx_px - wzx_tx);
+      wzx_ty = wzx_py - wzx_ratio * (wzx_py - wzx_ty);
+      wzx_scale = wzx_doubleScale;
+      wzx_clamp();
+    }
+
+    wzx_apply(true);
+  }
+
+  // 功能：手势被系统打断时清理状态，避免下一次触摸沿用旧数据
+  function wzx_onTouchCancel() {
+    wzx_mode = "none";
+    wzx_pinch = null;
+    wzx_drag = null;
+    wzx_clamp();
+    wzx_apply(false);
+  }
+
+  // 功能：旋转屏幕或改变窗口尺寸后重新限制边界，保证状态不丢失
+  function wzx_onResize() {
+    wzx_clamp();
+    wzx_apply(false);
+  }
+
+  // 功能：绑定全部手势事件与复位按钮
+  function wzx_init() {
+    const wzx_viewer = document.getElementById("wzx_viewer");
+    wzx_viewer.addEventListener("touchstart", wzx_onTouchStart, { passive: true });
+    wzx_viewer.addEventListener("touchmove", wzx_onTouchMove, { passive: false });
+    wzx_viewer.addEventListener("touchend", wzx_onTouchEnd);
+    wzx_viewer.addEventListener("touchcancel", wzx_onTouchCancel);
+    window.addEventListener("resize", wzx_onResize);
+    window.addEventListener("orientationchange", wzx_onResize);
+
+    document.getElementById("wzx_reset").addEventListener("click", function () {
+      wzx_scale = 1;
+      wzx_tx = 0;
+      wzx_ty = 0;
+      wzx_apply(true);
+    });
+
+    wzx_apply(false);
+  }
+
+  wzx_init();
+</script>
+</body>
+</html>

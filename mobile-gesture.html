@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<!--
+  作者：王振旭（24002120207）
+  建立时间：2026-11-18
+  使用大模型：DeepSeek-V4.1-Flash
+  功能名称：移动端中华美食卡片，左右滑动切换（阈值 40px、300ms 冷却、边界提示）
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="移动端触摸手势练习：左右滑动切换中华美食卡片">
+    <title>中华美食 · 滑动卡片</title>
+    <style>
+        :root {
+            --wzx_ink: #15130f;
+            --wzx_muted: #7b7468;
+            --wzx_paper: #f6f2ea;
+            --wzx_line: #e2dbcc;
+            --wzx_accent: #b3261e;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-width: 320px;
+            margin: 0;
+            color: var(--wzx_ink);
+            background: var(--wzx_paper);
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            line-height: 1.65;
+        }
+
+        .wzx_page {
+            width: min(520px, calc(100% - 28px));
+            margin: 0 auto;
+            padding: 26px 0 46px;
+        }
+
+        .wzx_head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--wzx_line);
+        }
+
+        .wzx_head h1 {
+            margin: 0;
+            font-family: "Songti SC", "SimSun", serif;
+            font-size: 22px;
+            font-weight: 400;
+        }
+
+        .wzx_head span { color: var(--wzx_muted); font-size: 12px; }
+
+        .wzx_deck {
+            position: relative;
+            margin: 22px 0 0;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 18px 40px rgba(21, 19, 15, 0.18);
+            /* 只接管横向手势，纵向仍交给浏览器滚动页面 */
+            touch-action: pan-y;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .wzx_card {
+            display: flex;
+            min-height: 320px;
+            flex-direction: column;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 26px 24px 28px;
+            color: #fff;
+            background: linear-gradient(150deg, #b3261e, #6d1611);
+            will-change: transform, opacity;
+        }
+
+        .wzx_card-tag {
+            align-self: flex-start;
+            padding: 2px 10px;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            border-radius: 999px;
+            font-size: 11px;
+            letter-spacing: 0.16em;
+        }
+
+        .wzx_card-name {
+            margin: 6px 0 0;
+            font-family: "Songti SC", "SimSun", serif;
+            font-size: clamp(30px, 9vw, 40px);
+            font-weight: 400;
+            line-height: 1.2;
+            letter-spacing: 0.04em;
+        }
+
+        .wzx_card-desc {
+            margin: 0;
+            max-width: 30ch;
+            color: rgba(255, 255, 255, 0.86);
+            font-size: 13.5px;
+        }
+
+        .wzx_bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .wzx_count { color: var(--wzx_muted); font-size: 13px; }
+
+        .wzx_dots { display: flex; gap: 7px; }
+
+        .wzx_dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #cfc6b6;
+            transition: background-color 200ms ease, transform 200ms ease;
+        }
+
+        .wzx_dot--on { background: var(--wzx_accent); transform: scale(1.25); }
+
+        .wzx_tip {
+            margin: 16px 0 0;
+            color: var(--wzx_muted);
+            font-size: 12px;
+        }
+
+        .wzx_toast {
+            position: fixed;
+            left: 50%;
+            bottom: 28px;
+            padding: 9px 18px;
+            border-radius: 999px;
+            color: #fff;
+            background: rgba(21, 19, 15, 0.9);
+            font-size: 13px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, 10px);
+            transition: opacity 180ms ease, transform 180ms ease;
+        }
+
+        .wzx_toast--show { opacity: 1; transform: translate(-50%, 0); }
+
+        .wzx_note {
+            margin: 22px 0 0;
+            padding: 14px 16px;
+            border-left: 3px solid var(--wzx_accent);
+            background: #fffdf8;
+            color: #4b453b;
+            font-size: 12.5px;
+        }
+
+        .wzx_note strong { display: block; margin-bottom: 4px; }
+
+        @media (max-width: 400px) {
+            .wzx_card { min-height: 280px; padding: 22px 20px 24px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .wzx_card, .wzx_dot, .wzx_toast { transition: none !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="wzx_page">
+    <header class="wzx_head">
+        <h1>中华美食 · 滑动卡片</h1>
+        <span>24002120207 王振旭</span>
+    </header>
+
+    <div class="wzx_deck" id="wzx_deck">
+        <article class="wzx_card" id="wzx_card">
+            <span class="wzx_card-tag" id="wzx_tag">北京</span>
+            <h2 class="wzx_card-name" id="wzx_name">北京烤鸭</h2>
+            <p class="wzx_card-desc" id="wzx_desc">片得薄如纸，配荷叶饼、葱丝与甜面酱。</p>
+        </article>
+    </div>
+
+    <div class="wzx_bar">
+        <span class="wzx_count" id="wzx_count">第 1/4 张</span>
+        <div class="wzx_dots" id="wzx_dots" aria-hidden="true"></div>
+    </div>
+
+    <p class="wzx_tip">左滑看下一道，右滑回上一道；短距离轻触不会触发切换。</p>
+
+    <div class="wzx_note">
+        <strong>实现要点</strong>
+        阈值 40px 且横向位移要大于纵向位移；切换有 0.3s 过渡，冷却 300ms 防止快速连滑跳两张；容器用 <code>touch-action: pan-y</code>，纵向仍可滚动页面。
+    </div>
+</div>
+
+<div class="wzx_toast" id="wzx_toast" role="status" aria-live="polite"></div>
+
+<script>
+  // 四道菜的数据：名称、地域、简介与渐变背景
+  const wzx_dishes = [
+    { name: "北京烤鸭", tag: "北京", desc: "片得薄如纸，配荷叶饼、葱丝与甜面酱。", bg: "linear-gradient(150deg, #b3261e, #6d1611)" },
+    { name: "兰州牛肉面", tag: "甘肃", desc: "一清二白三红四绿五黄，汤清面细。", bg: "linear-gradient(150deg, #d9a441, #8d5a12)" },
+    { name: "广式早茶", tag: "广东", desc: "一盅两件，虾饺烧卖配一壶普洱。", bg: "linear-gradient(150deg, #3f7a5a, #1f4a39)" },
+    { name: "重庆小面", tag: "重庆", desc: "麻辣鲜香，二两小面配一碗豌杂。", bg: "linear-gradient(150deg, #c2461f, #6f2410)" }
+  ];
+
+  // 手势阈值：小于该位移视为点击
+  const wzx_threshold = 40;
+  // 冷却时间：避免一次快速连滑跳过多张
+  const wzx_cooldown = 300;
+
+  let wzx_index = 0;
+  let wzx_startX = 0;
+  let wzx_startY = 0;
+  let wzx_locked = false;
+  let wzx_toastTimer = null;
+
+  // 功能：按当前索引把菜名、地域、简介与背景色写入卡片
+  function wzx_renderCard() {
+    const wzx_dish = wzx_dishes[wzx_index];
+    const wzx_card = document.getElementById("wzx_card");
+    wzx_card.style.background = wzx_dish.bg;
+    document.getElementById("wzx_tag").textContent = wzx_dish.tag;
+    document.getElementById("wzx_name").textContent = wzx_dish.name;
+    document.getElementById("wzx_desc").textContent = wzx_dish.desc;
+    document.getElementById("wzx_count").textContent = "第 " + (wzx_index + 1) + "/" + wzx_dishes.length + " 张";
+
+    const wzx_dots = document.getElementById("wzx_dots");
+    wzx_dots.innerHTML = "";
+    wzx_dishes.forEach(function (wzx_item, wzx_i) {
+      const wzx_dot = document.createElement("span");
+      wzx_dot.className = "wzx_dot" + (wzx_i === wzx_index ? " wzx_dot--on" : "");
+      wzx_dots.appendChild(wzx_dot);
+    });
+  }
+
+  // 功能：底部提示条，显示边界提示并自动消失
+  function wzx_showToast(wzx_text) {
+    const wzx_toast = document.getElementById("wzx_toast");
+    wzx_toast.textContent = wzx_text;
+    wzx_toast.classList.add("wzx_toast--show");
+    clearTimeout(wzx_toastTimer);
+    wzx_toastTimer = setTimeout(function () {
+      wzx_toast.classList.remove("wzx_toast--show");
+    }, 1400);
+  }
+
+  // 功能：带 0.3s 过渡切换到目标卡片，结束后解除锁定
+  function wzx_switchTo(wzx_next, wzx_direction) {
+    const wzx_card = document.getElementById("wzx_card");
+    wzx_locked = true;
+
+    wzx_card.style.transition = "transform 300ms ease, opacity 300ms ease";
+    wzx_card.style.transform = "translateX(" + (-34 * wzx_direction) + "px)";
+    wzx_card.style.opacity = "0";
+
+    setTimeout(function () {
+      wzx_index = wzx_next;
+      wzx_renderCard();
+
+      wzx_card.style.transition = "none";
+      wzx_card.style.transform = "translateX(" + (34 * wzx_direction) + "px)";
+      void wzx_card.offsetWidth;
+
+      wzx_card.style.transition = "transform 300ms ease, opacity 300ms ease";
+      wzx_card.style.transform = "translateX(0)";
+      wzx_card.style.opacity = "1";
+
+      setTimeout(function () {
+        wzx_locked = false;
+      }, wzx_cooldown);
+    }, 300);
+  }
+
+  // 功能：判断方向并执行切换，越界时只给提示不切换
+  function wzx_handleSwipe(wzx_dx, wzx_dy) {
+    if (Math.abs(wzx_dx) < wzx_threshold || Math.abs(wzx_dx) < Math.abs(wzx_dy)) {
+      return;
+    }
+
+    if (wzx_dx < 0) {
+      if (wzx_index >= wzx_dishes.length - 1) {
+        wzx_showToast("已经是最后一张");
+        return;
+      }
+      wzx_switchTo(wzx_index + 1, 1);
+    } else {
+      if (wzx_index <= 0) {
+        wzx_showToast("已经是第一张");
+        return;
+      }
+      wzx_switchTo(wzx_index - 1, -1);
+    }
+  }
+
+  // 功能：触摸开始，记录起点坐标
+  function wzx_onTouchStart(wzx_event) {
+    const wzx_touch = wzx_event.touches[0];
+    wzx_startX = wzx_touch.clientX;
+    wzx_startY = wzx_touch.clientY;
+  }
+
+  // 功能：触摸结束，用 changedTouches[0] 计算位移并判断是否滑动
+  function wzx_onTouchEnd(wzx_event) {
+    if (wzx_locked) {
+      return;
+    }
+    const wzx_touch = wzx_event.changedTouches[0];
+    wzx_handleSwipe(wzx_touch.clientX - wzx_startX, wzx_touch.clientY - wzx_startY);
+  }
+
+  // 功能：允许桌面端用左右方向键切换，方便无触摸设备时验证
+  function wzx_onKeyDown(wzx_event) {
+    if (wzx_locked) {
+      return;
+    }
+    if (wzx_event.key === "ArrowLeft") {
+      wzx_handleSwipe(-wzx_threshold - 1, 0);
+    } else if (wzx_event.key === "ArrowRight") {
+      wzx_handleSwipe(wzx_threshold + 1, 0);
+    }
+  }
+
+  // 功能：绑定触摸、键盘与被打断时的清理逻辑，并渲染首张卡片
+  function wzx_init() {
+    const wzx_deck = document.getElementById("wzx_deck");
+    wzx_deck.addEventListener("touchstart", wzx_onTouchStart, { passive: true });
+    wzx_deck.addEventListener("touchend", wzx_onTouchEnd);
+    wzx_deck.addEventListener("touchcancel", function () {
+      wzx_startX = 0;
+      wzx_startY = 0;
+    });
+    document.addEventListener("keydown", wzx_onKeyDown);
+    wzx_renderCard();
+  }
+
+  wzx_init();
+</script>
+</body>
+</html>
